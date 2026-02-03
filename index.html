@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Laboral Farmacia</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+import { Calendar, Users, Settings, Plus, Edit2, Trash2, Save, X, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+
+// CONSTANTES
+const DIAS_SEMANA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DIAS_SEMANA_COMPLETO = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+const TIPOS_EVENTO = {
+  VACACIONES: { label: 'Vacaciones', color: 'bg-blue-500', bgLight: 'bg-blue-100', letra: 'V' },
+  ASUNTOS_PROPIOS: { label: 'Asuntos Propios', color: 'bg-purple-500', bgLight: 'bg-purple-100', letra: 'A' },
+  SABADO_LIBRE: { label: 'Sábado Libre', color: 'bg-teal-500', bgLight: 'bg-teal-100', letra: 'SL' },
+  FALTA_HORAS: { label: 'Falta', color: 'bg-red-500', bgLight: 'bg-red-100', letra: 'F' },
+  HORAS_EXTRA: { label: 'Horas Extra', color: 'bg-green-500', bgLight: 'bg-green-100', letra: '+' },
+  FESTIVO_TRABAJADO: { label: 'Festivo Trabajado', color: 'bg-orange-500', bgLight: 'bg-orange-100', letra: 'FT' },
+};
+
+const FESTIVOS_POR_ANIO = {
+  2024: [
+    { fecha: '2024-01-01', descripcion: 'Año Nuevo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-01-06', descripcion: 'Reyes', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-03-29', descripcion: 'Viernes Santo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-05-01', descripcion: 'Día del Trabajo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-06-09', descripcion: 'La Rioja', ambito: 'AUTONOMICO', medio_dia: false },
+    { fecha: '2024-06-24', descripcion: 'San Juan del Monte (Miranda)', ambito: 'LOCAL', medio_dia: true },
+    { fecha: '2024-08-15', descripcion: 'Asunción', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-10-12', descripcion: 'Fiesta Nacional', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-11-01', descripcion: 'Todos los Santos', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-12-06', descripcion: 'Constitución', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-12-08', descripcion: 'Inmaculada', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-12-24', descripcion: 'Nochebuena', ambito: 'CONVENIO', medio_dia: true },
+    { fecha: '2024-12-25', descripcion: 'Navidad', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2024-12-31', descripcion: 'Nochevieja', ambito: 'CONVENIO', medio_dia: true }
+  ],
+  2025: [
+    { fecha: '2025-01-01', descripcion: 'Año Nuevo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-01-06', descripcion: 'Reyes', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-04-18', descripcion: 'Viernes Santo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-05-01', descripcion: 'Día del Trabajo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-06-09', descripcion: 'La Rioja', ambito: 'AUTONOMICO', medio_dia: false },
+    { fecha: '2025-06-23', descripcion: 'San Juan del Monte (Miranda)', ambito: 'LOCAL', medio_dia: true },
+    { fecha: '2025-08-15', descripcion: 'Asunción', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-10-12', descripcion: 'Fiesta Nacional', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-11-01', descripcion: 'Todos los Santos', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-12-06', descripcion: 'Constitución', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-12-08', descripcion: 'Inmaculada', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-12-24', descripcion: 'Nochebuena', ambito: 'CONVENIO', medio_dia: true },
+    { fecha: '2025-12-25', descripcion: 'Navidad', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2025-12-31', descripcion: 'Nochevieja', ambito: 'CONVENIO', medio_dia: true }
+  ],
+  2026: [
+    { fecha: '2026-01-01', descripcion: 'Año Nuevo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-01-06', descripcion: 'Reyes', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-04-03', descripcion: 'Viernes Santo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-05-01', descripcion: 'Día del Trabajo', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-06-09', descripcion: 'La Rioja', ambito: 'AUTONOMICO', medio_dia: false },
+    { fecha: '2026-06-22', descripcion: 'San Juan del Monte (Miranda)', ambito: 'LOCAL', medio_dia: true },
+    { fecha: '2026-08-15', descripcion: 'Asunción', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-10-12', descripcion: 'Fiesta Nacional', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-11-01', descripcion: 'Todos los Santos', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-12-06', descripcion: 'Constitución', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-12-08', descripcion: 'Inmaculada', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-12-24', descripcion: 'Nochebuena', ambito: 'CONVENIO', medio_dia: true },
+    { fecha: '2026-12-25', descripcion: 'Navidad', ambito: 'NACIONAL', medio_dia: false },
+    { fecha: '2026-12-31', descripcion: 'Nochevieja', ambito: 'CONVENIO', medio_dia: true }
+  ]
+};
+
+// Utilidades
+const calcularHoras = (inicio, fin) => {
+  if (!inicio || !fin) return 0;
+  const [h1, m1] = inicio.split(':').map(Number);
+  const [h2, m2] = fin.split(':').map(Number);
+  return ((h2 * 60 + m2) - (h1 * 60 + m1)) / 60;
+};
+
+const calcularHorasSemanales = (horario) => {
+  let total = 0;
+  ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'].forEach(dia => {
+    if (horario[dia]?.activo) total += calcularHoras(horario[dia].inicio, horario[dia].fin);
+  });
+  return Math.round(total * 100) / 100;
+};
+
+const calcularHorasDia = (fecha, horario) => {
+  const diaSemana = new Date(fecha + 'T12:00:00').getDay();
+  const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+  const nombreDia = dias[diaSemana];
+  if (!horario || !horario[nombreDia] || !horario[nombreDia].activo) return 0;
+  return calcularHoras(horario[nombreDia].inicio, horario[nombreDia].fin);
+};
+
+const useMultiYear = (key, initialValue) => {
+  const [data, setData] = useState(() => {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : initialValue;
+  });
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(data));
+  }, [key, data]);
+  return [data, setData];
+};
+
+// MOTOR DE CÁLCULO CORREGIDO
+const MotorCalculo = {
+  calcularHorasAnuales: (empleado, convenio, eventos, festivos, horarios, simular = false) => {
+    const anio = convenio.anio;
+    let horasRealesTrabajadas = 0;
+    let horasVacaciones = 0;
+    let horasFestivos = 0;
+    const horasTeoricas = convenio.horas_anuales;
+    
+    const obtenerHorario = (fecha) => {
+      return horarios
+        .filter(h => h.empleado_id === empleado.id)
+        .sort((a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio))
+        .find(h => {
+          const fechaDate = new Date(fecha + 'T12:00:00');
+          const inicio = new Date(h.fecha_inicio + 'T12:00:00');
+          const fin = h.fecha_fin ? new Date(h.fecha_fin + 'T12:00:00') : new Date('2099-12-31');
+          return fechaDate >= inicio && fechaDate <= fin;
+        });
+    };
+    
+    for (let mes = 0; mes < 12; mes++) {
+      const diasMes = new Date(anio, mes + 1, 0).getDate();
+      for (let dia = 1; dia <= diasMes; dia++) {
+        const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        const diaSemana = new Date(fecha + 'T12:00:00').getDay();
+        
+        // DOMINGOS NUNCA CUENTAN
+        if (diaSemana === 0) continue;
+        
+        const horario = obtenerHorario(fecha);
+        if (!horario) continue;
+        
+        const horasDia = calcularHorasDia(fecha, horario);
+        
+        const eventoDelDia = eventos.find(e => 
+          e.empleado_id === empleado.id && 
+          fecha >= e.fecha_inicio && 
+          fecha <= e.fecha_fin
+        );
+        
+        const festivoDelDia = festivos.find(f => f.fecha === fecha);
+        
+        // Lógica según tipo de día
+        if (eventoDelDia) {
+          if (simular && ['VACACIONES', 'ASUNTOS_PROPIOS', 'SABADO_LIBRE'].includes(eventoDelDia.tipo_evento)) {
+            // En simulación, contar como trabajadas
+            horasRealesTrabajadas += horasDia;
+          } else {
+            switch (eventoDelDia.tipo_evento) {
+              case 'VACACIONES':
+              case 'ASUNTOS_PROPIOS':
+              case 'SABADO_LIBRE':
+                horasVacaciones += horasDia; // Horas NO trabajadas
+                break;
+              case 'FALTA_HORAS':
+                horasRealesTrabajadas -= eventoDelDia.horas || 0;
+                break;
+              case 'HORAS_EXTRA':
+                horasRealesTrabajadas += eventoDelDia.horas || 0;
+                break;
+              case 'FESTIVO_TRABAJADO':
+                horasRealesTrabajadas += horasDia;
+                break;
+            }
+          }
+        } else if (festivoDelDia) {
+          if (festivoDelDia.medio_dia) {
+            horasRealesTrabajadas += horasDia / 2;
+            horasFestivos += horasDia / 2;
+          } else {
+            horasFestivos += horasDia;
+          }
+        } else {
+          // Día normal trabajado
+          horasRealesTrabajadas += horasDia;
+        }
+      }
+    }
+    
+    const saldo = horasRealesTrabajadas - horasTeoricas;
+    
+    return {
+      horasTeoricas: Math.round(horasTeoricas * 100) / 100,
+      horasRealesTrabajadas: Math.round(horasRealesTrabajadas * 100) / 100,
+      horasVacaciones: Math.round(horasVacaciones * 100) / 100,
+      horasFestivos: Math.round(horasFestivos * 100) / 100,
+      saldo: Math.round(saldo * 100) / 100
+    };
+  },
+  
+  calcularVacaciones: (empleado, convenio, eventos) => {
+    const vacacionesUsadas = eventos.filter(e => 
+      e.empleado_id === empleado.id && 
+      e.tipo_evento === 'VACACIONES'
+    ).reduce((total, e) => {
+      const inicio = new Date(e.fecha_inicio + 'T12:00:00');
+      const fin = new Date(e.fecha_fin + 'T12:00:00');
+      const dias = Math.round((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+      return total + dias;
+    }, 0);
+    
+    return {
+      total: convenio.dias_vacaciones,
+      usadas: vacacionesUsadas,
+      disponibles: convenio.dias_vacaciones - vacacionesUsadas
+    };
+  },
+  
+  calcularAsuntosPropios: (empleado, convenio, eventos) => {
+    const asuntosUsados = eventos.filter(e => 
+      e.empleado_id === empleado.id && 
+      e.tipo_evento === 'ASUNTOS_PROPIOS'
+    ).reduce((total, e) => {
+      const inicio = new Date(e.fecha_inicio + 'T12:00:00');
+      const fin = new Date(e.fecha_fin + 'T12:00:00');
+      const dias = Math.round((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+      return total + dias;
+    }, 0);
+    
+    return {
+      total: convenio.dias_asuntos_propios,
+      usados: asuntosUsados,
+      disponibles: convenio.dias_asuntos_propios - asuntosUsados
+    };
+  },
+  
+  // CÁLCULO CORRECTO: (Horas totales posibles - Vacaciones - Festivos) - Convenio
+  calcularSabadosLibres: (empleado, convenio, eventos, festivos, horarios) => {
+    const anio = convenio.anio;
+    
+    const obtenerHorario = (fecha) => {
+      return horarios
+        .filter(h => h.empleado_id === empleado.id)
+        .sort((a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio))
+        .find(h => {
+          const fechaDate = new Date(fecha + 'T12:00:00');
+          const inicio = new Date(h.fecha_inicio + 'T12:00:00');
+          const fin = h.fecha_fin ? new Date(h.fecha_fin + 'T12:00:00') : new Date('2099-12-31');
+          return fechaDate >= inicio && fechaDate <= fin;
+        });
+    };
+    
+    // 1. Calcular TODAS las horas laborables posibles del año (sin eventos)
+    let horasTotalesPosibles = 0;
+    let horasVacaciones = 0;
+    let horasFestivos = 0;
+    let horasFaltas = 0;
+    let horasExtra = 0;
+    let totalHorasSabado = 0;
+    let cantidadSabados = 0;
+    
+    for (let mes = 0; mes < 12; mes++) {
+      const diasMes = new Date(anio, mes + 1, 0).getDate();
+      for (let dia = 1; dia <= diasMes; dia++) {
+        const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        const diaSemana = new Date(fecha + 'T12:00:00').getDay();
+        
+        if (diaSemana === 0) continue; // Ignorar domingos
+        
+        const horario = obtenerHorario(fecha);
+        if (!horario) continue;
+        
+        const horasDia = calcularHorasDia(fecha, horario);
+        
+        // Sumar a horas totales posibles
+        horasTotalesPosibles += horasDia;
+        
+        // Contar sábados
+        if (diaSemana === 6) {
+          cantidadSabados++;
+          totalHorasSabado += horasDia;
+        }
+        
+        // Identificar qué tipo de día es
+        const eventoDelDia = eventos.find(e => 
+          e.empleado_id === empleado.id && 
+          fecha >= e.fecha_inicio && 
+          fecha <= e.fecha_fin
+        );
+        
+        const festivoDelDia = festivos.find(f => f.fecha === fecha);
+        
+        // Contabilizar según el tipo
+        if (eventoDelDia) {
+          switch (eventoDelDia.tipo_evento) {
+            case 'VACACIONES':
+            case 'ASUNTOS_PROPIOS':
+            case 'SABADO_LIBRE':
+              horasVacaciones += horasDia;
+              break;
+            case 'FALTA_HORAS':
+              horasFaltas += eventoDelDia.horas || 0;
+              break;
+            case 'HORAS_EXTRA':
+              horasExtra += eventoDelDia.horas || 0;
+              break;
+            case 'FESTIVO_TRABAJADO':
+              // Si trabaja un festivo, no resta de las horas posibles
+              break;
+          }
+        } else if (festivoDelDia) {
+          if (festivoDelDia.medio_dia) {
+            horasFestivos += horasDia / 2;
+          } else {
+            horasFestivos += horasDia;
+          }
+        }
+      }
+    }
+    
+    const horasPromedioPorSabado = cantidadSabados > 0 ? totalHorasSabado / cantidadSabados : 0;
+    
+    // 2. Calcular horas netas disponibles
+    // Horas netas = Todas las posibles - Vacaciones - Festivos - Faltas + Extra
+    const horasNetas = horasTotalesPosibles - horasVacaciones - horasFestivos - horasFaltas + horasExtra;
+    
+    // 3. Saldo respecto al convenio
+    const saldoHoras = horasNetas - convenio.horas_anuales;
+    
+    // 4. Sábados disponibles por saldo positivo
+    const sabadosPorSaldo = saldoHoras > 0 && horasPromedioPorSabado > 0
+      ? Math.floor(saldoHoras / horasPromedioPorSabado)
+      : 0;
+    
+    // 5. Sábados ya usados
+    const sabadosUsados = eventos.filter(e => 
+      e.empleado_id === empleado.id && 
+      e.tipo_evento === 'SABADO_LIBRE'
+    ).reduce((total, e) => {
+      const inicio = new Date(e.fecha_inicio + 'T12:00:00');
+      const fin = new Date(e.fecha_fin + 'T12:00:00');
+      let count = 0;
+      for (let d = new Date(inicio); d <= fin; d.setDate(d.getDate() + 1)) {
+        if (d.getDay() === 6) count++;
+      }
+      return total + count;
+    }, 0);
+    
+    // 6. Disponibles = Por saldo - Usados
+    const disponibles = Math.max(0, sabadosPorSaldo - sabadosUsados);
+    
+    return {
+      porSaldo: sabadosPorSaldo,
+      disponibles: disponibles,
+      usados: sabadosUsados,
+      saldoHoras: Math.round(saldoHoras * 100) / 100,
+      horasPorSabado: Math.round(horasPromedioPorSabado * 100) / 100,
+      horasTotales: Math.round(horasTotalesPosibles * 100) / 100,
+      horasVacaciones: Math.round(horasVacaciones * 100) / 100,
+      horasFestivos: Math.round(horasFestivos * 100) / 100,
+      horasNetas: Math.round(horasNetas * 100) / 100
+    };
+  }
+};
+
+// Componente Calendario Anual
+const CalendarioAnual = ({ anio, empleado, eventos, festivos, guardias }) => {
+  const obtenerEventosDia = (fecha) => {
+    const eventos_dia = [];
+    
+    // Eventos del empleado
+    const evento = eventos.find(e => 
+      e.empleado_id === empleado.id && 
+      fecha >= e.fecha_inicio && 
+      fecha <= e.fecha_fin
+    );
+    if (evento) eventos_dia.push({ tipo: 'evento', data: evento });
+    
+    // Festivos
+    const festivo = festivos.find(f => f.fecha === fecha);
+    if (festivo) eventos_dia.push({ tipo: 'festivo', data: festivo });
+    
+    // Guardias
+    const guardia = guardias.find(g => g.empleado_id === empleado.id && g.fecha === fecha);
+    if (guardia) eventos_dia.push({ tipo: 'guardia', data: guardia });
+    
+    return eventos_dia;
+  };
+  
+  return (
+    <div className="space-y-4">
+      <h3 className="font-bold text-gray-900">Calendario Anual {anio}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(12)].map((_, mesIdx) => {
+          const primerDia = new Date(anio, mesIdx, 1);
+          const ultimoDia = new Date(anio, mesIdx + 1, 0);
+          const diasMes = ultimoDia.getDate();
+          const primerDiaSemana = primerDia.getDay();
+          
+          return (
+            <div key={mesIdx} className="border rounded-lg p-3">
+              <h4 className="font-semibold text-center mb-2">{MESES[mesIdx]}</h4>
+              <div className="grid grid-cols-7 gap-1">
+                {DIAS_SEMANA.map(d => (
+                  <div key={d} className="text-xs font-bold text-center text-gray-600">{d}</div>
+                ))}
+                {[...Array(primerDiaSemana)].map((_, i) => <div key={`empty-${i}`} />)}
+                {[...Array(diasMes)].map((_, dia) => {
+                  const fecha = `${anio}-${String(mesIdx + 1).padStart(2, '0')}-${String(dia + 1).padStart(2, '0')}`;
+                  const diaSemana = new Date(fecha + 'T12:00:00').getDay();
+                  const eventosDia = obtenerEventosDia(fecha);
+                  
+                  let bgColor = 'bg-white';
+                  let letra = '';
+                  
+                  if (diaSemana === 0) bgColor = 'bg-gray-100';
+                  
+                  eventosDia.forEach(ev => {
+                    if (ev.tipo === 'evento') {
+                      bgColor = TIPOS_EVENTO[ev.data.tipo_evento].bgLight;
+                      letra = TIPOS_EVENTO[ev.data.tipo_evento].letra;
+                    } else if (ev.tipo === 'festivo') {
+                      bgColor = 'bg-yellow-100';
+                      letra = ev.data.medio_dia ? 'F½' : 'F';
+                    } else if (ev.tipo === 'guardia') {
+                      letra = letra ? letra + ',G' : 'G';
+                    }
+                  });
+                  
+                  return (
+                    <div key={dia} className={`h-8 ${bgColor} rounded flex flex-col items-center justify-center text-xs relative`}>
+                      <span className="font-semibold">{dia + 1}</span>
+                      {letra && <span className="text-[8px] font-bold absolute bottom-0">{letra}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-4 text-xs">
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-blue-100 rounded"></div><span>V - Vacaciones</span></div>
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-purple-100 rounded"></div><span>A - Asuntos Propios</span></div>
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-teal-100 rounded"></div><span>SL - Sábado Libre</span></div>
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-100 rounded"></div><span>F - Falta</span></div>
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-green-100 rounded"></div><span>+ - Horas Extra</span></div>
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-yellow-100 rounded"></div><span>F - Festivo</span></div>
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-pink-100 rounded"></div><span>G - Guardia</span></div>
+      </div>
+    </div>
+  );
+};
+
+// Calendario Global
+const CalendarioGlobal = ({ anio, empleados, eventos, festivos }) => {
+  const [mesActual, setMesActual] = useState(new Date().getMonth());
+  
+  const obtenerEventosDia = (fecha) => {
+    const eventos_dia = [];
+    
+    empleados.forEach(emp => {
+      const evento = eventos.find(e => 
+        e.empleado_id === emp.id && 
+        ['VACACIONES', 'ASUNTOS_PROPIOS', 'SABADO_LIBRE'].includes(e.tipo_evento) &&
+        fecha >= e.fecha_inicio && 
+        fecha <= e.fecha_fin
+      );
+      if (evento) {
+        eventos_dia.push({
+          empleado: emp.nombre,
+          letra: TIPOS_EVENTO[evento.tipo_evento].letra,
+          color: TIPOS_EVENTO[evento.tipo_evento].bgLight
+        });
+      }
+    });
+    
+    const festivo = festivos.find(f => f.fecha === fecha);
+    if (festivo) {
+      eventos_dia.push({
+        empleado: festivo.descripcion,
+        letra: festivo.medio_dia ? 'F½' : 'F',
+        color: 'bg-yellow-100'
+      });
+    }
+    
+    return eventos_dia;
+  };
+  
+  const primerDia = new Date(anio, mesActual, 1);
+  const ultimoDia = new Date(anio, mesActual + 1, 0);
+  const diasMes = ultimoDia.getDate();
+  const primerDiaSemana = primerDia.getDay();
+  
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-gray-900">Calendario Global - {MESES[mesActual]} {anio}</h3>
+        <div className="flex gap-2">
+          <button onClick={() => setMesActual((mesActual - 1 + 12) % 12)} className="p-2 hover:bg-gray-100 rounded">
+            <ChevronLeft size={20} />
+          </button>
+          <button onClick={() => setMesActual((mesActual + 1) % 12)} className="p-2 hover:bg-gray-100 rounded">
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-7 gap-2">
+        {DIAS_SEMANA.map(d => (
+          <div key={d} className="text-sm font-bold text-center text-gray-600 p-2">{d}</div>
+        ))}
+        {[...Array(primerDiaSemana)].map((_, i) => <div key={`empty-${i}`} className="h-24" />)}
+        {[...Array(diasMes)].map((_, dia) => {
+          const fecha = `${anio}-${String(mesActual + 1).padStart(2, '0')}-${String(dia + 1).padStart(2, '0')}`;
+          const diaSemana = new Date(fecha + 'T12:00:00').getDay();
+          const eventosDia = obtenerEventosDia(fecha);
+          
+          return (
+            <div key={dia} className={`h-24 border rounded-lg p-2 ${diaSemana === 0 ? 'bg-gray-50' : 'bg-white'} overflow-y-auto`}>
+              <div className="font-semibold text-sm mb-1">{dia + 1}</div>
+              <div className="space-y-1">
+                {eventosDia.map((ev, idx) => (
+                  <div key={idx} className={`text-[10px] ${ev.color} rounded px-1`}>
+                    {ev.empleado} - {ev.letra}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// COMPONENTES UI (simplificados)
+const Card = ({ children, className = '' }) => (
+  <div className={`bg-white rounded-xl shadow-sm border border-gray-100 ${className}`}>{children}</div>
+);
+
+const Button = ({ children, onClick, variant = 'primary', icon: Icon, size = 'md', disabled = false, className = '' }) => {
+  const variants = {
+    primary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+    secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700',
+    danger: 'bg-red-600 hover:bg-red-700 text-white',
+    ghost: 'hover:bg-gray-100 text-gray-700'
+  };
+  const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2' };
+  return (
+    <button onClick={onClick} disabled={disabled} className={`flex items-center gap-2 rounded-lg font-medium transition-all ${variants[variant]} ${sizes[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      {Icon && <Icon size={18} />}
+      {children}
+    </button>
+  );
+};
+
+const Input = ({ label, type = 'text', value, onChange, placeholder = '', min, max, step, required = false }) => (
+  <div className="flex flex-col gap-1">
+    {label && <label className="text-sm font-medium text-gray-700">{label} {required && <span className="text-red-500">*</span>}</label>}
+    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} min={min} max={max} step={step} required={required} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+  </div>
+);
+
+const Select = ({ label, value, onChange, options, required = false }) => (
+  <div className="flex flex-col gap-1">
+    {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+    <select value={value} onChange={(e) => onChange(e.target.value)} required={required} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+      {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+    </select>
+  </div>
+);
+
+const Checkbox = ({ label, checked, onChange }) => (
+  <label className="flex items-center gap-2 cursor-pointer">
+    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 text-emerald-600 rounded" />
+    <span className="text-sm text-gray-700">{label}</span>
+  </label>
+);
+
+const Modal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-white z-10">
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><X size={24} /></button>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+// APLICACIÓN PRINCIPAL
+export default function FarmaciaControl() {
+  const [vista, setVista] = useState('dashboard');
+  const [datosPorAnio, setDatosPorAnio] = useMultiYear('farmacia_datos', {});
+  const [anioActual, setAnioActual] = useState(2025);
+  const [modoSimulacion, setModoSimulacion] = useState(false);
+  
+  const getDatosAnio = (anio) => {
+    if (!datosPorAnio[anio]) {
+      return {
+        empleados: anio === 2025 ? [
+          { id: 1, nombre: 'Ana García', fecha_alta: '2025-01-01', activo: true, horas_arrastre: 0 },
+          { id: 2, nombre: 'Carlos López', fecha_alta: '2025-01-01', activo: true, horas_arrastre: 0 }
+        ] : [],
+        eventos: anio === 2025 ? [
+          { id: 1, empleado_id: 1, tipo_evento: 'VACACIONES', fecha_inicio: '2025-07-01', fecha_fin: '2025-07-15', horas: null },
+          { id: 2, empleado_id: 1, tipo_evento: 'VACACIONES', fecha_inicio: '2025-12-20', fecha_fin: '2025-12-26', horas: null },
+          { id: 3, empleado_id: 2, tipo_evento: 'VACACIONES', fecha_inicio: '2025-08-01', fecha_fin: '2025-08-15', horas: null },
+          { id: 4, empleado_id: 2, tipo_evento: 'VACACIONES', fecha_inicio: '2025-12-27', fecha_fin: '2025-12-31', horas: null },
+          { id: 5, empleado_id: 1, tipo_evento: 'ASUNTOS_PROPIOS', fecha_inicio: '2025-03-15', fecha_fin: '2025-03-15', horas: null },
+          { id: 6, empleado_id: 2, tipo_evento: 'ASUNTOS_PROPIOS', fecha_inicio: '2025-05-20', fecha_fin: '2025-05-20', horas: null }
+        ] : [],
+        festivos: (FESTIVOS_POR_ANIO[anio] || []).map((f, i) => ({ ...f, id: i + 1 })),
+        horarios: anio === 2025 ? [
+          { id: 1, empleado_id: 1, fecha_inicio: '2025-01-01', fecha_fin: null, descripcion: 'Jornada completa',
+            lunes: { activo: true, inicio: '09:30', fin: '19:30' }, martes: { activo: true, inicio: '09:30', fin: '19:30' },
+            miercoles: { activo: true, inicio: '09:30', fin: '19:30' }, jueves: { activo: true, inicio: '09:30', fin: '19:30' },
+            viernes: { activo: true, inicio: '09:30', fin: '19:30' }, sabado: { activo: true, inicio: '09:45', fin: '13:30' },
+            domingo: { activo: false, inicio: '', fin: '' }
+          },
+          { id: 2, empleado_id: 2, fecha_inicio: '2025-01-01', fecha_fin: null, descripcion: 'Jornada completa',
+            lunes: { activo: true, inicio: '09:30', fin: '19:30' }, martes: { activo: true, inicio: '09:30', fin: '19:30' },
+            miercoles: { activo: true, inicio: '09:30', fin: '19:30' }, jueves: { activo: true, inicio: '09:30', fin: '19:30' },
+            viernes: { activo: true, inicio: '09:30', fin: '19:30' }, sabado: { activo: true, inicio: '09:45', fin: '13:30' },
+            domingo: { activo: false, inicio: '', fin: '' }
+          }
+        ] : [],
+        guardias: [],
+        convenio: { anio, horas_anuales: 1776, dias_vacaciones: 22, dias_asuntos_propios: 3 }
+      };
+    }
+    return datosPorAnio[anio];
+  };
+  
+  const datosActuales = getDatosAnio(anioActual);
+  const [empleados, setEmpleados] = useState(datosActuales.empleados);
+  const [convenio, setConvenio] = useState(datosActuales.convenio);
+  const [eventos, setEventos] = useState(datosActuales.eventos);
+  const [festivos, setFestivos] = useState(datosActuales.festivos);
+  const [horarios, setHorarios] = useState(datosActuales.horarios);
+  const [guardias, setGuardias] = useState(datosActuales.guardias);
+  
+  useEffect(() => {
+    setDatosPorAnio(prev => ({
+      ...prev,
+      [anioActual]: { empleados, eventos, festivos, horarios, guardias, convenio }
+    }));
+  }, [empleados, eventos, festivos, horarios, guardias, convenio, anioActual]);
+  
+  const cambiarAnio = (nuevoAnio) => {
+    setAnioActual(nuevoAnio);
+    const nuevosDatos = getDatosAnio(nuevoAnio);
+    
+    // Si el nuevo año no tiene empleados, copiar los activos del año actual
+    if (nuevosDatos.empleados.length === 0 && empleados.length > 0) {
+      const empleadosActivos = empleados.filter(e => e.activo).map(e => ({
+        ...e,
+        // Mantener las horas de arrastre si las tiene
+        horas_arrastre: e.horas_arrastre || 0
+      }));
+      nuevosDatos.empleados = empleadosActivos;
+      
+      // Crear horarios base para los empleados copiados
+      nuevosDatos.horarios = empleadosActivos.map(emp => {
+        const horarioAnterior = horarios.find(h => h.empleado_id === emp.id);
+        if (horarioAnterior) {
+          return {
+            ...horarioAnterior,
+            id: Date.now() + emp.id,
+            fecha_inicio: `${nuevoAnio}-01-01`,
+            fecha_fin: null
+          };
+        }
+        return {
+          id: Date.now() + emp.id,
+          empleado_id: emp.id,
+          fecha_inicio: `${nuevoAnio}-01-01`,
+          fecha_fin: null,
+          descripcion: 'Jornada completa',
+          lunes: { activo: true, inicio: '09:30', fin: '19:30' },
+          martes: { activo: true, inicio: '09:30', fin: '19:30' },
+          miercoles: { activo: true, inicio: '09:30', fin: '19:30' },
+          jueves: { activo: true, inicio: '09:30', fin: '19:30' },
+          viernes: { activo: true, inicio: '09:30', fin: '19:30' },
+          sabado: { activo: true, inicio: '09:45', fin: '13:30' },
+          domingo: { activo: false, inicio: '', fin: '' }
+        };
+      });
+    }
+    
+    setEmpleados(nuevosDatos.empleados);
+    setConvenio({ ...nuevosDatos.convenio, anio: nuevoAnio });
+    
+    const festivosPredefinidos = FESTIVOS_POR_ANIO[nuevoAnio] || [];
+    const festivosManuales = nuevosDatos.festivos.filter(f => f.ambito === 'MANUAL');
+    setFestivos([...festivosPredefinidos.map((f, i) => ({ ...f, id: Date.now() + i })), ...festivosManuales]);
+    
+    setEventos(nuevosDatos.eventos);
+    setHorarios(nuevosDatos.horarios);
+    setGuardias(nuevosDatos.guardias);
+  };
+  
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
+  const [modalEmpleado, setModalEmpleado] = useState(false);
+  const [modalEvento, setModalEvento] = useState(false);
+  const [modalHorario, setModalHorario] = useState(false);
+  const [modalGuardia, setModalGuardia] = useState(false);
+  const [modalFestivo, setModalFestivo] = useState(false);
+  const [modalTraspaso, setModalTraspaso] = useState(false);
+  
+  const [editandoEmpleado, setEditandoEmpleado] = useState(null);
+  const [editandoEvento, setEditandoEvento] = useState(null);
+  const [editandoHorario, setEditandoHorario] = useState(null);
+  const [editandoGuardia, setEditandoGuardia] = useState(null);
+  const [editandoFestivo, setEditandoFestivo] = useState(null);
+  
+  const [formEmpleado, setFormEmpleado] = useState({ nombre: '', fecha_alta: '' });
+  const [formEvento, setFormEvento] = useState({ tipo_evento: 'VACACIONES', fecha_inicio: '', fecha_fin: '', horas: 0 });
+  const [formHorario, setFormHorario] = useState({
+    fecha_inicio: '', fecha_fin: '', descripcion: '',
+    lunes: { activo: true, inicio: '09:30', fin: '19:30' },
+    martes: { activo: true, inicio: '09:30', fin: '19:30' },
+    miercoles: { activo: true, inicio: '09:30', fin: '19:30' },
+    jueves: { activo: true, inicio: '09:30', fin: '19:30' },
+    viernes: { activo: true, inicio: '09:30', fin: '19:30' },
+    sabado: { activo: true, inicio: '09:45', fin: '13:30' },
+    domingo: { activo: false, inicio: '', fin: '' }
+  });
+  const [formGuardia, setFormGuardia] = useState({ empleado_id: '', fecha: '', tipo: '', observaciones: '' });
+  const [formFestivo, setFormFestivo] = useState({ fecha: '', descripcion: '', ambito: 'MANUAL', medio_dia: false });
+  const [formTraspaso, setFormTraspaso] = useState({ empleado_id: '', horas: 0 });
+  
+  const estadisticas = useMemo(() => {
+    const stats = empleados.filter(e => e.activo).map(emp => {
+      const horas = MotorCalculo.calcularHorasAnuales(emp, convenio, eventos, festivos, horarios, modoSimulacion);
+      const vacaciones = MotorCalculo.calcularVacaciones(emp, convenio, eventos);
+      const asuntos = MotorCalculo.calcularAsuntosPropios(emp, convenio, eventos);
+      const sabados = MotorCalculo.calcularSabadosLibres(emp, convenio, eventos, festivos, horarios);
+      return { empleado: emp, horas, vacaciones, asuntos, sabados };
+    });
+    return { empleados: stats, totalEmpleados: stats.length };
+  }, [empleados, convenio, eventos, festivos, horarios, modoSimulacion]);
+  
+  // Handlers (igual que antes, omitidos por brevedad)
+  const guardarEmpleado = () => {
+    if (!formEmpleado.nombre || !formEmpleado.fecha_alta) return;
+    if (editandoEmpleado) {
+      setEmpleados(empleados.map(e => e.id === editandoEmpleado.id ? { ...e, ...formEmpleado } : e));
+      setEditandoEmpleado(null);
+    } else {
+      setEmpleados([...empleados, { id: Date.now(), ...formEmpleado, activo: true, horas_arrastre: 0 }]);
+    }
+    setFormEmpleado({ nombre: '', fecha_alta: '' });
+    setModalEmpleado(false);
+  };
+  
+  const guardarEvento = () => {
+    if (!empleadoSeleccionado || !formEvento.fecha_inicio || !formEvento.fecha_fin) return;
+    const eventoData = {
+      empleado_id: empleadoSeleccionado.id,
+      tipo_evento: formEvento.tipo_evento,
+      fecha_inicio: formEvento.fecha_inicio,
+      fecha_fin: formEvento.fecha_fin,
+      horas: ['FALTA_HORAS', 'HORAS_EXTRA'].includes(formEvento.tipo_evento) ? parseFloat(formEvento.horas) || 0 : null
+    };
+    if (editandoEvento) {
+      setEventos(eventos.map(e => e.id === editandoEvento.id ? { ...e, ...eventoData } : e));
+      setEditandoEvento(null);
+    } else {
+      setEventos([...eventos, { id: Date.now(), ...eventoData }]);
+    }
+    setFormEvento({ tipo_evento: 'VACACIONES', fecha_inicio: '', fecha_fin: '', horas: 0 });
+    setModalEvento(false);
+  };
+  
+  const guardarHorario = () => {
+    if (!empleadoSeleccionado || !formHorario.fecha_inicio) return;
+    const horarioData = { empleado_id: empleadoSeleccionado.id, ...formHorario };
+    if (editandoHorario) {
+      setHorarios(horarios.map(h => h.id === editandoHorario.id ? { ...h, ...horarioData } : h));
+      setEditandoHorario(null);
+    } else {
+      setHorarios([...horarios, { id: Date.now(), ...horarioData }]);
+    }
+    setModalHorario(false);
+  };
+  
+  const guardarGuardia = () => {
+    if (!formGuardia.empleado_id || !formGuardia.fecha || !formGuardia.tipo) return;
+    const guardiaData = {
+      empleado_id: parseInt(formGuardia.empleado_id),
+      fecha: formGuardia.fecha,
+      tipo: formGuardia.tipo,
+      observaciones: formGuardia.observaciones
+    };
+    if (editandoGuardia) {
+      setGuardias(guardias.map(g => g.id === editandoGuardia.id ? { ...g, ...guardiaData } : g));
+      setEditandoGuardia(null);
+    } else {
+      setGuardias([...guardias, { id: Date.now(), ...guardiaData }]);
+    }
+    setFormGuardia({ empleado_id: '', fecha: '', tipo: '', observaciones: '' });
+    setModalGuardia(false);
+  };
+  
+  const guardarFestivo = () => {
+    if (!formFestivo.fecha || !formFestivo.descripcion) return;
+    const festivoData = {
+      fecha: formFestivo.fecha,
+      descripcion: formFestivo.descripcion,
+      ambito: formFestivo.ambito,
+      medio_dia: formFestivo.medio_dia
+    };
+    if (editandoFestivo) {
+      setFestivos(festivos.map(f => f.id === editandoFestivo.id ? { ...f, ...festivoData } : f));
+      setEditandoFestivo(null);
+    } else {
+      setFestivos([...festivos, { id: Date.now(), ...festivoData }]);
+    }
+    setFormFestivo({ fecha: '', descripcion: '', ambito: 'MANUAL', medio_dia: false });
+    setModalFestivo(false);
+  };
+  
+  const traspasarHoras = () => {
+    if (!formTraspaso.empleado_id || !formTraspaso.horas) return;
+    setEmpleados(empleados.map(e => 
+      e.id === parseInt(formTraspaso.empleado_id)
+        ? { ...e, horas_arrastre: parseFloat(formTraspaso.horas) }
+        : e
+    ));
+    setFormTraspaso({ empleado_id: '', horas: 0 });
+    setModalTraspaso(false);
+    alert('Horas traspasadas correctamente');
+  };
+  
+  // VISTAS
+  const VistaDashboard = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <Select value={anioActual} onChange={(v) => cambiarAnio(parseInt(v))} options={[2024, 2025, 2026].map(a => ({ value: a, label: `Año ${a}` }))} />
+      </div>
+      
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Empleados Activos</p>
+            <p className="text-3xl font-bold text-gray-900">{estadisticas.totalEmpleados}</p>
+          </div>
+          <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <Users className="text-emerald-600" size={24} />
+          </div>
+        </div>
+      </Card>
+      
+      <Card className="p-6">
+        <CalendarioGlobal anio={anioActual} empleados={empleados} eventos={eventos} festivos={festivos} />
+      </Card>
+      
+      <Card className="p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Resumen Empleados</h2>
+        <div className="space-y-3">
+          {estadisticas.empleados.map(stat => (
+            <div key={stat.empleado.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors" onClick={() => { setEmpleadoSeleccionado(stat.empleado); setVista('empleado'); }}>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">{stat.empleado.nombre}</p>
+                <p className="text-sm text-gray-500">Alta: {stat.empleado.fecha_alta}</p>
+              </div>
+              <div className="flex gap-6 text-sm">
+                <div className="text-center">
+                  <p className="text-gray-500">Vacaciones</p>
+                  <p className="font-semibold text-blue-600">{stat.vacaciones.disponibles}/{stat.vacaciones.total}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-500">Sábados</p>
+                  <p className="font-semibold text-teal-600">{stat.sabados.disponibles}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-500">Saldo</p>
+                  <p className={`font-semibold ${stat.horas.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {stat.horas.saldo > 0 ? '+' : ''}{stat.horas.saldo}h
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+  
+  const VistaEmpleados = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Empleados</h1>
+        <Button icon={Plus} onClick={() => { setEditandoEmpleado(null); setFormEmpleado({ nombre: '', fecha_alta: '' }); setModalEmpleado(true); }}>Nuevo</Button>
+      </div>
+      <div className="grid gap-4">
+        {empleados.map(emp => {
+          const stat = estadisticas.empleados.find(s => s.empleado.id === emp.id);
+          return (
+            <Card key={emp.id} className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">{emp.nombre}</h3>
+                  <p className="text-sm text-gray-600 mt-1">Alta: {emp.fecha_alta}</p>
+                  {stat && (
+                    <div className="flex gap-4 text-sm mt-2">
+                      <span className="text-blue-600">Vac: {stat.vacaciones.disponibles}/{stat.vacaciones.total}</span>
+                      <span className="text-teal-600">Sáb: {stat.sabados.disponibles}</span>
+                      <span className={stat.horas.saldo >= 0 ? 'text-green-600' : 'text-red-600'}>Saldo: {stat.horas.saldo > 0 ? '+' : ''}{stat.horas.saldo}h</span>
+                    </div>
+                  )}
+                </div>
+                <Button variant="secondary" size="sm" onClick={() => { setEmpleadoSeleccionado(emp); setVista('empleado'); }}>Detalles</Button>
+              </div>
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-gray-900">Horarios</h4>
+                  <Button icon={Plus} size="sm" variant="secondary" onClick={() => { setEmpleadoSeleccionado(emp); setEditandoHorario(null); setModalHorario(true); }}>Añadir</Button>
+                </div>
+                {horarios.filter(h => h.empleado_id === emp.id).map(h => (
+                  <div key={h.id} className="p-3 bg-gray-50 rounded-lg mb-2">
+                    <p className="font-medium text-sm">{h.descripcion}</p>
+                    <p className="text-xs text-gray-500">{h.fecha_inicio} → {h.fecha_fin || 'Indefinido'} - {calcularHorasSemanales(h)}h/sem</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+  
+  const VistaEmpleado = () => {
+    if (!empleadoSeleccionado) return null;
+    const stat = estadisticas.empleados.find(e => e.empleado.id === empleadoSeleccionado.id);
+    if (!stat) return null;
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" icon={ChevronLeft} onClick={() => setVista('dashboard')}>Volver</Button>
+          <h1 className="text-3xl font-bold text-gray-900">{empleadoSeleccionado.nombre}</h1>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="p-6">
+            <p className="text-sm text-gray-500 mb-1">Vacaciones</p>
+            <p className="text-2xl font-bold text-blue-600">{stat.vacaciones.disponibles}/{stat.vacaciones.total}</p>
+          </Card>
+          <Card className="p-6">
+            <p className="text-sm text-gray-500 mb-1">Asuntos Propios</p>
+            <p className="text-2xl font-bold text-purple-600">{stat.asuntos.disponibles}/{stat.asuntos.total}</p>
+          </Card>
+          <Card className="p-6">
+            <p className="text-sm text-gray-500 mb-1">Sábados Libres</p>
+            <p className="text-2xl font-bold text-teal-600">{stat.sabados.disponibles}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Por saldo: {stat.sabados.porSaldo} | Usados: {stat.sabados.usados}
+            </p>
+            <p className="text-xs text-gray-500">
+              Saldo: {stat.sabados.saldoHoras > 0 ? '+' : ''}{stat.sabados.saldoHoras}h ({stat.sabados.horasPorSabado}h/sáb)
+            </p>
+          </Card>
+          <Card className="p-6">
+            <p className="text-sm text-gray-500 mb-1">Saldo Horas</p>
+            <p className={`text-2xl font-bold ${stat.horas.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {stat.horas.saldo > 0 ? '+' : ''}{stat.horas.saldo}h
+            </p>
+          </Card>
+        </div>
+        
+        <div className="flex gap-2 items-center">
+          <Button icon={Plus} onClick={() => setModalEvento(true)}>Añadir Evento</Button>
+          <Checkbox label="Simulación (sin vacaciones)" checked={modoSimulacion} onChange={setModoSimulacion} />
+        </div>
+        
+        <Card className="p-6">
+          <CalendarioAnual anio={anioActual} empleado={empleadoSeleccionado} eventos={eventos} festivos={festivos} guardias={guardias} />
+        </Card>
+        
+        <Card className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Eventos</h2>
+          <div className="space-y-2">
+            {eventos.filter(e => e.empleado_id === empleadoSeleccionado.id).map(ev => (
+              <div key={ev.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${TIPOS_EVENTO[ev.tipo_evento].color}`}></div>
+                  <div>
+                    <p className="font-medium text-gray-900">{TIPOS_EVENTO[ev.tipo_evento].label}</p>
+                    <p className="text-sm text-gray-500">{ev.fecha_inicio} → {ev.fecha_fin}</p>
+                  </div>
+                </div>
+                <Button variant="ghost" icon={Trash2} size="sm" onClick={() => setEventos(eventos.filter(e => e.id !== ev.id))} className="!p-2" />
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  };
+  
+  const VistaConfiguracion = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
+        <div className="flex gap-3">
+          <Select value={anioActual} onChange={(v) => cambiarAnio(parseInt(v))} options={[2024, 2025, 2026].map(a => ({ value: a, label: `Año ${a}` }))} />
+          <Button icon={RefreshCw} variant="secondary" onClick={() => {
+            if (confirm('¿Recargar festivos?')) {
+              const fps = FESTIVOS_POR_ANIO[anioActual] || [];
+              const manuales = festivos.filter(f => f.ambito === 'MANUAL');
+              setFestivos([...fps.map((f, i) => ({ ...f, id: Date.now() + i })), ...manuales]);
+            }
+          }}>Actualizar Festivos</Button>
+        </div>
+      </div>
+      
+      <Card className="p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Convenio {anioActual}</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <Input label="Horas Anuales" type="number" value={convenio.horas_anuales} onChange={(v) => setConvenio({...convenio, horas_anuales: parseFloat(v)})} />
+          <Input label="Días Vacaciones" type="number" value={convenio.dias_vacaciones} onChange={(v) => setConvenio({...convenio, dias_vacaciones: parseInt(v)})} />
+          <Input label="Días Asuntos Propios" type="number" value={convenio.dias_asuntos_propios} onChange={(v) => setConvenio({...convenio, dias_asuntos_propios: parseInt(v)})} />
+        </div>
+      </Card>
+      
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Traspaso Horas</h2>
+          <Button icon={Plus} size="sm" onClick={() => setModalTraspaso(true)}>Traspasar</Button>
+        </div>
+        <p className="text-sm text-gray-600">Permite traspasar horas no consumidas entre años</p>
+      </Card>
+      
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Guardias</h2>
+          <Button icon={Plus} size="sm" onClick={() => { setEditandoGuardia(null); setFormGuardia({ empleado_id: '', fecha: '', tipo: '', observaciones: '' }); setModalGuardia(true); }}>Añadir</Button>
+        </div>
+        <div className="space-y-2">
+          {guardias.map(g => {
+            const emp = empleados.find(e => e.id === g.empleado_id);
+            return (
+              <div key={g.id} className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{emp?.nombre} - {g.tipo}</p>
+                  <p className="text-sm text-gray-500">{g.fecha}</p>
+                </div>
+                <Button variant="ghost" icon={Trash2} size="sm" onClick={() => setGuardias(guardias.filter(gg => gg.id !== g.id))} className="!p-2" />
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+      
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Festivos</h2>
+          <Button icon={Plus} size="sm" onClick={() => { setEditandoFestivo(null); setFormFestivo({ fecha: '', descripcion: '', ambito: 'MANUAL', medio_dia: false }); setModalFestivo(true); }}>Añadir</Button>
+        </div>
+        <div className="space-y-1">
+          {festivos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).map(f => (
+            <div key={f.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div>
+                <span className="font-medium text-sm">{f.descripcion}</span>
+                <span className="text-xs text-gray-500 ml-2">{f.fecha}</span>
+                {f.medio_dia && <span className="text-xs text-orange-600 ml-2">(½)</span>}
+              </div>
+              <Button variant="ghost" icon={Trash2} size="sm" onClick={() => setFestivos(festivos.filter(ff => ff.id !== f.id))} className="!p-1" />
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+      <div className="bg-white border-b shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                <Calendar className="text-white" size={24} />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Farmacia Control</span>
+            </div>
+            <nav className="flex gap-2">
+              {['dashboard', 'empleados', 'configuracion'].map(v => (
+                <button key={v} onClick={() => setVista(v)} className={`px-4 py-2 rounded-lg font-medium transition-colors capitalize ${vista === v ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  {v === 'configuracion' ? 'Config' : v}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {vista === 'dashboard' && <VistaDashboard />}
+        {vista === 'empleados' && <VistaEmpleados />}
+        {vista === 'empleado' && <VistaEmpleado />}
+        {vista === 'configuracion' && <VistaConfiguracion />}
+      </div>
+      
+      {/* MODALES - igual que antes, omitidos por brevedad */}
+      <Modal isOpen={modalEmpleado} onClose={() => setModalEmpleado(false)} title="Empleado">
+        <div className="space-y-4">
+          <Input label="Nombre" value={formEmpleado.nombre} onChange={(v) => setFormEmpleado({...formEmpleado, nombre: v})} required />
+          <Input label="Fecha Alta" type="date" value={formEmpleado.fecha_alta} onChange={(v) => setFormEmpleado({...formEmpleado, fecha_alta: v})} required />
+          <div className="flex gap-2 pt-4">
+            <Button onClick={guardarEmpleado} icon={Save} className="flex-1">Guardar</Button>
+            <Button variant="secondary" onClick={() => setModalEmpleado(false)}>Cancelar</Button>
+          </div>
+        </div>
+      </Modal>
+      
+      <Modal isOpen={modalEvento} onClose={() => setModalEvento(false)} title="Evento">
+        <div className="space-y-4">
+          <Select label="Tipo" value={formEvento.tipo_evento} onChange={(v) => setFormEvento({...formEvento, tipo_evento: v})} options={Object.entries(TIPOS_EVENTO).map(([k, v]) => ({ value: k, label: v.label }))} />
+          <Input label="Inicio" type="date" value={formEvento.fecha_inicio} onChange={(v) => setFormEvento({...formEvento, fecha_inicio: v})} required />
+          <Input label="Fin" type="date" value={formEvento.fecha_fin} onChange={(v) => setFormEvento({...formEvento, fecha_fin: v})} required />
+          {['FALTA_HORAS', 'HORAS_EXTRA'].includes(formEvento.tipo_evento) && (
+            <Input label="Horas" type="number" value={formEvento.horas} onChange={(v) => setFormEvento({...formEvento, horas: v})} step="0.5" min="0" required />
+          )}
+          <div className="flex gap-2 pt-4">
+            <Button onClick={guardarEvento} icon={Save} className="flex-1">Guardar</Button>
+            <Button variant="secondary" onClick={() => setModalEvento(false)}>Cancelar</Button>
+          </div>
+        </div>
+      </Modal>
+      
+      <Modal isOpen={modalHorario} onClose={() => setModalHorario(false)} title="Horario">
+        <div className="space-y-4">
+          <Input label="Descripción" value={formHorario.descripcion} onChange={(v) => setFormHorario({...formHorario, descripcion: v})} required />
+          <Input label="Inicio" type="date" value={formHorario.fecha_inicio} onChange={(v) => setFormHorario({...formHorario, fecha_inicio: v})} required />
+          <Input label="Fin" type="date" value={formHorario.fecha_fin} onChange={(v) => setFormHorario({...formHorario, fecha_fin: v})} />
+          <div className="border-t pt-4">
+            <h3 className="font-bold mb-3">Semanal</h3>
+            {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'].map((dia, idx) => (
+              <div key={dia} className="space-y-2 mb-3">
+                <Checkbox label={DIAS_SEMANA_COMPLETO[idx + 1]} checked={formHorario[dia].activo} onChange={(checked) => setFormHorario({ ...formHorario, [dia]: { ...formHorario[dia], activo: checked } })} />
+                {formHorario[dia].activo && (
+                  <div className="grid grid-cols-2 gap-2 ml-6">
+                    <Input type="time" value={formHorario[dia].inicio} onChange={(v) => setFormHorario({ ...formHorario, [dia]: { ...formHorario[dia], inicio: v } })} />
+                    <Input type="time" value={formHorario[dia].fin} onChange={(v) => setFormHorario({ ...formHorario, [dia]: { ...formHorario[dia], fin: v } })} />
+                  </div>
+                )}
+              </div>
+            ))}
+            <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
+              <p className="text-sm font-medium text-emerald-900">Total: {calcularHorasSemanales(formHorario)}h/sem</p>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button onClick={guardarHorario} icon={Save} className="flex-1">Guardar</Button>
+            <Button variant="secondary" onClick={() => setModalHorario(false)}>Cancelar</Button>
+          </div>
+        </div>
+      </Modal>
+      
+      <Modal isOpen={modalGuardia} onClose={() => setModalGuardia(false)} title="Guardia">
+        <div className="space-y-4">
+          <Select label="Empleado" value={formGuardia.empleado_id} onChange={(v) => setFormGuardia({...formGuardia, empleado_id: v})} options={[{ value: '', label: 'Seleccionar' }, ...empleados.map(e => ({ value: e.id.toString(), label: e.nombre }))]} required />
+          <Input label="Fecha" type="date" value={formGuardia.fecha} onChange={(v) => setFormGuardia({...formGuardia, fecha: v})} required />
+          <Input label="Tipo" value={formGuardia.tipo} onChange={(v) => setFormGuardia({...formGuardia, tipo: v})} placeholder="Mañana/Tarde/24h" required />
+          <Input label="Observaciones" value={formGuardia.observaciones} onChange={(v) => setFormGuardia({...formGuardia, observaciones: v})} />
+          <div className="flex gap-2 pt-4">
+            <Button onClick={guardarGuardia} icon={Save} className="flex-1">Guardar</Button>
+            <Button variant="secondary" onClick={() => setModalGuardia(false)}>Cancelar</Button>
+          </div>
+        </div>
+      </Modal>
+      
+      <Modal isOpen={modalFestivo} onClose={() => setModalFestivo(false)} title="Festivo">
+        <div className="space-y-4">
+          <Input label="Fecha" type="date" value={formFestivo.fecha} onChange={(v) => setFormFestivo({...formFestivo, fecha: v})} required />
+          <Input label="Descripción" value={formFestivo.descripcion} onChange={(v) => setFormFestivo({...formFestivo, descripcion: v})} required />
+          <Select label="Ámbito" value={formFestivo.ambito} onChange={(v) => setFormFestivo({...formFestivo, ambito: v})} options={[
+            { value: 'MANUAL', label: 'Manual' },
+            { value: 'LOCAL', label: 'Local' },
+            { value: 'AUTONOMICO', label: 'Autonómico' },
+            { value: 'NACIONAL', label: 'Nacional' },
+            { value: 'CONVENIO', label: 'Convenio' }
+          ]} />
+          <Checkbox label="Medio día" checked={formFestivo.medio_dia} onChange={(checked) => setFormFestivo({...formFestivo, medio_dia: checked})} />
+          <div className="flex gap-2 pt-4">
+            <Button onClick={guardarFestivo} icon={Save} className="flex-1">Guardar</Button>
+            <Button variant="secondary" onClick={() => setModalFestivo(false)}>Cancelar</Button>
+          </div>
+        </div>
+      </Modal>
+      
+      <Modal isOpen={modalTraspaso} onClose={() => setModalTraspaso(false)} title="Traspasar Horas">
+        <div className="space-y-4">
+          <Select label="Empleado" value={formTraspaso.empleado_id} onChange={(v) => setFormTraspaso({...formTraspaso, empleado_id: v})} options={[{ value: '', label: 'Seleccionar' }, ...empleados.map(e => ({ value: e.id.toString(), label: e.nombre }))]} required />
+          <Input label="Horas" type="number" value={formTraspaso.horas} onChange={(v) => setFormTraspaso({...formTraspaso, horas: v})} step="0.5" required />
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-900">Las horas se sumarán al convenio del siguiente año</p>
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button onClick={traspasarHoras} icon={Save} className="flex-1">Traspasar</Button>
+            <Button variant="secondary" onClick={() => setModalTraspaso(false)}>Cancelar</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+
+// Renderizar la aplicación
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(FarmaciaControl));
+    </script>
+</body>
+</html>
