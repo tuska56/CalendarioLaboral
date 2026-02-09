@@ -1,18 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Laboral Farmacia</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"></script>
-</head>
-<body>
-    <div id="root"></div>
-    
-    <script type="text/babel">
+import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Users, Settings, Plus, Edit2, Trash2, Save, X, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
 // CONSTANTES
@@ -101,6 +87,14 @@ const calcularHorasDia = (fecha, horario) => {
   const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   const nombreDia = dias[diaSemana];
   if (!horario || !horario[nombreDia] || !horario[nombreDia].activo) return 0;
+  
+  // Si tiene jornada partida (inicio2 y fin2)
+  if (horario[nombreDia].inicio2 && horario[nombreDia].fin2) {
+    const manana = calcularHoras(horario[nombreDia].inicio, horario[nombreDia].fin);
+    const tarde = calcularHoras(horario[nombreDia].inicio2, horario[nombreDia].fin2);
+    return manana + tarde;
+  }
+  
   return calcularHoras(horario[nombreDia].inicio, horario[nombreDia].fin);
 };
 
@@ -119,9 +113,11 @@ const useMultiYear = (key, initialValue) => {
 const MotorCalculo = {
   calcularHorasAnuales: (empleado, convenio, eventos, festivos, horarios, simular = false) => {
     const anio = convenio.anio;
-    let horasRealesTrabajadas = 0;
+    let horasTotales = 0;  // Todas las horas laborables del año
     let horasVacaciones = 0;
     let horasFestivos = 0;
+    let horasFaltas = 0;
+    let horasExtra = 0;
     const horasTeoricas = convenio.horas_anuales;
     
     const obtenerHorario = (fecha) => {
@@ -150,6 +146,9 @@ const MotorCalculo = {
         
         const horasDia = calcularHorasDia(fecha, horario);
         
+        // SIEMPRE sumar las horas del día al total
+        horasTotales += horasDia;
+        
         const eventoDelDia = eventos.find(e => 
           e.empleado_id === empleado.id && 
           fecha >= e.fecha_inicio && 
@@ -158,43 +157,38 @@ const MotorCalculo = {
         
         const festivoDelDia = festivos.find(f => f.fecha === fecha);
         
-        // Lógica según tipo de día
+        // Identificar descuentos
         if (eventoDelDia) {
-          if (simular && ['VACACIONES', 'ASUNTOS_PROPIOS', 'SABADO_LIBRE'].includes(eventoDelDia.tipo_evento)) {
-            // En simulación, contar como trabajadas
-            horasRealesTrabajadas += horasDia;
-          } else {
+          if (!simular) {
             switch (eventoDelDia.tipo_evento) {
               case 'VACACIONES':
               case 'ASUNTOS_PROPIOS':
               case 'SABADO_LIBRE':
-                horasVacaciones += horasDia; // Horas NO trabajadas
+                horasVacaciones += horasDia;
                 break;
               case 'FALTA_HORAS':
-                horasRealesTrabajadas -= eventoDelDia.horas || 0;
+                horasFaltas += eventoDelDia.horas || 0;
                 break;
               case 'HORAS_EXTRA':
-                horasRealesTrabajadas += eventoDelDia.horas || 0;
-                break;
-              case 'FESTIVO_TRABAJADO':
-                horasRealesTrabajadas += horasDia;
+                horasExtra += eventoDelDia.horas || 0;
                 break;
             }
           }
         } else if (festivoDelDia) {
           if (festivoDelDia.medio_dia) {
-            horasRealesTrabajadas += horasDia / 2;
-            horasFestivos += horasDia / 2;
+            // Medio día = solo trabaja la mañana (09:30-14:00 = 4.5h)
+            const horasMañana = 4.5;
+            horasTotales += horasMañana;
+            horasFestivos += horasMañana;
           } else {
             horasFestivos += horasDia;
           }
-        } else {
-          // Día normal trabajado
-          horasRealesTrabajadas += horasDia;
         }
       }
     }
     
+    // Horas reales trabajadas = Total - Vacaciones - Festivos - Faltas + Extra
+    const horasRealesTrabajadas = horasTotales - horasVacaciones - horasFestivos - horasFaltas + horasExtra;
     const saldo = horasRealesTrabajadas - horasTeoricas;
     
     return {
@@ -242,7 +236,7 @@ const MotorCalculo = {
     };
   },
   
-  // CÁLCULO CORRECTO: (Horas totales posibles - Vacaciones - Festivos) - Convenio
+  // CÁLCULO CORRECTO: Solo horas L-V, sin incluir sábados
   calcularSabadosLibres: (empleado, convenio, eventos, festivos, horarios) => {
     const anio = convenio.anio;
     
@@ -258,13 +252,13 @@ const MotorCalculo = {
         });
     };
     
-    // 1. Calcular TODAS las horas laborables posibles del año (sin eventos)
-    let horasTotalesPosibles = 0;
-    let horasVacaciones = 0;
-    let horasFestivos = 0;
+    // Calcular SOLO horas L-V (SIN incluir sábados en el total)
+    let horasLV = 0;
+    let horasVacacionesLV = 0;
+    let horasFestivosLV = 0;
     let horasFaltas = 0;
     let horasExtra = 0;
-    let totalHorasSabado = 0;
+    let horasSabados = 0;
     let cantidadSabados = 0;
     
     for (let mes = 0; mes < 12; mes++) {
@@ -280,67 +274,66 @@ const MotorCalculo = {
         
         const horasDia = calcularHorasDia(fecha, horario);
         
-        // Sumar a horas totales posibles
-        horasTotalesPosibles += horasDia;
-        
-        // Contar sábados
+        // SEPARAR: Sábados vs L-V
         if (diaSemana === 6) {
+          // Solo contar sábados para calcular horas promedio
           cantidadSabados++;
-          totalHorasSabado += horasDia;
+          horasSabados += horasDia;
+          continue; // NO incluir en cálculo L-V
         }
         
-        // Identificar qué tipo de día es
-        const eventoDelDia = eventos.find(e => 
+        // Solo días L-V a partir de aquí
+        const evento = eventos.find(e => 
           e.empleado_id === empleado.id && 
           fecha >= e.fecha_inicio && 
           fecha <= e.fecha_fin
         );
         
-        const festivoDelDia = festivos.find(f => f.fecha === fecha);
+        const festivo = festivos.find(f => f.fecha === fecha);
         
-        // Contabilizar según el tipo
-        if (eventoDelDia) {
-          switch (eventoDelDia.tipo_evento) {
+        // Sumar horas totales L-V
+        horasLV += horasDia;
+        
+        // Identificar eventos y festivos
+        if (evento) {
+          switch (evento.tipo_evento) {
             case 'VACACIONES':
             case 'ASUNTOS_PROPIOS':
             case 'SABADO_LIBRE':
-              horasVacaciones += horasDia;
+              horasVacacionesLV += horasDia;
               break;
             case 'FALTA_HORAS':
-              horasFaltas += eventoDelDia.horas || 0;
+              horasFaltas += evento.horas || 0;
               break;
             case 'HORAS_EXTRA':
-              horasExtra += eventoDelDia.horas || 0;
-              break;
-            case 'FESTIVO_TRABAJADO':
-              // Si trabaja un festivo, no resta de las horas posibles
+              horasExtra += evento.horas || 0;
               break;
           }
-        } else if (festivoDelDia) {
-          if (festivoDelDia.medio_dia) {
-            horasFestivos += horasDia / 2;
+        } else if (festivo) {
+          if (festivo.medio_dia) {
+            // Medio día = solo trabaja la mañana (4.5h)
+            horasFestivosLV += 4.5;
           } else {
-            horasFestivos += horasDia;
+            horasFestivosLV += horasDia;
           }
         }
       }
     }
     
-    const horasPromedioPorSabado = cantidadSabados > 0 ? totalHorasSabado / cantidadSabados : 0;
+    const horasPromedioPorSabado = cantidadSabados > 0 ? horasSabados / cantidadSabados : 3.75;
     
-    // 2. Calcular horas netas disponibles
-    // Horas netas = Todas las posibles - Vacaciones - Festivos - Faltas + Extra
-    const horasNetas = horasTotalesPosibles - horasVacaciones - horasFestivos - horasFaltas + horasExtra;
+    // Horas netas L-V = Total L-V - Vacaciones L-V - Festivos L-V - Faltas + Extra
+    const horasNetasLV = horasLV - horasVacacionesLV - horasFestivosLV - horasFaltas + horasExtra;
     
-    // 3. Saldo respecto al convenio
-    const saldoHoras = horasNetas - convenio.horas_anuales;
+    // Saldo = Horas netas L-V - Convenio
+    const saldoHoras = horasNetasLV - convenio.horas_anuales;
     
-    // 4. Sábados disponibles por saldo positivo
+    // Sábados disponibles por saldo
     const sabadosPorSaldo = saldoHoras > 0 && horasPromedioPorSabado > 0
       ? Math.floor(saldoHoras / horasPromedioPorSabado)
       : 0;
     
-    // 5. Sábados ya usados
+    // Sábados ya usados
     const sabadosUsados = eventos.filter(e => 
       e.empleado_id === empleado.id && 
       e.tipo_evento === 'SABADO_LIBRE'
@@ -354,19 +347,12 @@ const MotorCalculo = {
       return total + count;
     }, 0);
     
-    // 6. Disponibles = Por saldo - Usados
-    const disponibles = Math.max(0, sabadosPorSaldo - sabadosUsados);
-    
     return {
       porSaldo: sabadosPorSaldo,
-      disponibles: disponibles,
+      disponibles: Math.max(0, sabadosPorSaldo - sabadosUsados),
       usados: sabadosUsados,
       saldoHoras: Math.round(saldoHoras * 100) / 100,
-      horasPorSabado: Math.round(horasPromedioPorSabado * 100) / 100,
-      horasTotales: Math.round(horasTotalesPosibles * 100) / 100,
-      horasVacaciones: Math.round(horasVacaciones * 100) / 100,
-      horasFestivos: Math.round(horasFestivos * 100) / 100,
-      horasNetas: Math.round(horasNetas * 100) / 100
+      horasPorSabado: Math.round(horasPromedioPorSabado * 100) / 100
     };
   }
 };
@@ -605,41 +591,47 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 export default function FarmaciaControl() {
   const [vista, setVista] = useState('dashboard');
   const [datosPorAnio, setDatosPorAnio] = useMultiYear('farmacia_datos', {});
-  const [anioActual, setAnioActual] = useState(2025);
+  const [anioActual, setAnioActual] = useState(2026);
   const [modoSimulacion, setModoSimulacion] = useState(false);
   
   const getDatosAnio = (anio) => {
     if (!datosPorAnio[anio]) {
       return {
-        empleados: anio === 2025 ? [
-          { id: 1, nombre: 'Ana García', fecha_alta: '2025-01-01', activo: true, horas_arrastre: 0 },
-          { id: 2, nombre: 'Carlos López', fecha_alta: '2025-01-01', activo: true, horas_arrastre: 0 }
+        empleados: anio === 2026 ? [
+          { id: 1, nombre: 'Ana García', fecha_alta: '2026-01-01', activo: true, horas_arrastre: 0 },
+          { id: 2, nombre: 'Carlos López', fecha_alta: '2026-01-01', activo: true, horas_arrastre: 0 }
         ] : [],
-        eventos: anio === 2025 ? [
-          { id: 1, empleado_id: 1, tipo_evento: 'VACACIONES', fecha_inicio: '2025-07-01', fecha_fin: '2025-07-15', horas: null },
-          { id: 2, empleado_id: 1, tipo_evento: 'VACACIONES', fecha_inicio: '2025-12-20', fecha_fin: '2025-12-26', horas: null },
-          { id: 3, empleado_id: 2, tipo_evento: 'VACACIONES', fecha_inicio: '2025-08-01', fecha_fin: '2025-08-15', horas: null },
-          { id: 4, empleado_id: 2, tipo_evento: 'VACACIONES', fecha_inicio: '2025-12-27', fecha_fin: '2025-12-31', horas: null },
-          { id: 5, empleado_id: 1, tipo_evento: 'ASUNTOS_PROPIOS', fecha_inicio: '2025-03-15', fecha_fin: '2025-03-15', horas: null },
-          { id: 6, empleado_id: 2, tipo_evento: 'ASUNTOS_PROPIOS', fecha_inicio: '2025-05-20', fecha_fin: '2025-05-20', horas: null }
+        eventos: anio === 2026 ? [
+          // Ana García: 30 días vacaciones (15 julio + 15 agosto)
+          { id: 1, empleado_id: 1, tipo_evento: 'VACACIONES', fecha_inicio: '2026-07-01', fecha_fin: '2026-07-15', horas: null },
+          { id: 2, empleado_id: 1, tipo_evento: 'VACACIONES', fecha_inicio: '2026-08-01', fecha_fin: '2026-08-15', horas: null },
+          // Carlos López: 30 días vacaciones (15 julio + 15 agosto)
+          { id: 3, empleado_id: 2, tipo_evento: 'VACACIONES', fecha_inicio: '2026-07-16', fecha_fin: '2026-07-30', horas: null },
+          { id: 4, empleado_id: 2, tipo_evento: 'VACACIONES', fecha_inicio: '2026-08-16', fecha_fin: '2026-08-30', horas: null }
         ] : [],
         festivos: (FESTIVOS_POR_ANIO[anio] || []).map((f, i) => ({ ...f, id: i + 1 })),
-        horarios: anio === 2025 ? [
-          { id: 1, empleado_id: 1, fecha_inicio: '2025-01-01', fecha_fin: null, descripcion: 'Jornada completa',
-            lunes: { activo: true, inicio: '09:30', fin: '19:30' }, martes: { activo: true, inicio: '09:30', fin: '19:30' },
-            miercoles: { activo: true, inicio: '09:30', fin: '19:30' }, jueves: { activo: true, inicio: '09:30', fin: '19:30' },
-            viernes: { activo: true, inicio: '09:30', fin: '19:30' }, sabado: { activo: true, inicio: '09:45', fin: '13:30' },
+        horarios: anio === 2026 ? [
+          { id: 1, empleado_id: 1, fecha_inicio: '2026-01-01', fecha_fin: null, descripcion: 'Jornada partida',
+            lunes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            martes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            miercoles: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            jueves: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            viernes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            sabado: { activo: true, inicio: '09:45', fin: '13:30' },
             domingo: { activo: false, inicio: '', fin: '' }
           },
-          { id: 2, empleado_id: 2, fecha_inicio: '2025-01-01', fecha_fin: null, descripcion: 'Jornada completa',
-            lunes: { activo: true, inicio: '09:30', fin: '19:30' }, martes: { activo: true, inicio: '09:30', fin: '19:30' },
-            miercoles: { activo: true, inicio: '09:30', fin: '19:30' }, jueves: { activo: true, inicio: '09:30', fin: '19:30' },
-            viernes: { activo: true, inicio: '09:30', fin: '19:30' }, sabado: { activo: true, inicio: '09:45', fin: '13:30' },
+          { id: 2, empleado_id: 2, fecha_inicio: '2026-01-01', fecha_fin: null, descripcion: 'Jornada partida',
+            lunes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            martes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            miercoles: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            jueves: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            viernes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+            sabado: { activo: true, inicio: '09:45', fin: '13:30' },
             domingo: { activo: false, inicio: '', fin: '' }
           }
         ] : [],
         guardias: [],
-        convenio: { anio, horas_anuales: 1776, dias_vacaciones: 22, dias_asuntos_propios: 3 }
+        convenio: { anio, horas_anuales: 1785, dias_vacaciones: 30, dias_asuntos_propios: 3 }
       };
     }
     return datosPorAnio[anio];
@@ -795,6 +787,16 @@ export default function FarmaciaControl() {
     } else {
       setHorarios([...horarios, { id: Date.now(), ...horarioData }]);
     }
+    setFormHorario({
+      fecha_inicio: '', fecha_fin: '', descripcion: '',
+      lunes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+      martes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+      miercoles: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+      jueves: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+      viernes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
+      sabado: { activo: true, inicio: '09:45', fin: '13:30' },
+      domingo: { activo: false, inicio: '', fin: '' }
+    });
     setModalHorario(false);
   };
   
@@ -886,7 +888,7 @@ export default function FarmaciaControl() {
                 </div>
                 <div className="text-center">
                   <p className="text-gray-500">Sábados</p>
-                  <p className="font-semibold text-teal-600">{stat.sabados.disponibles}</p>
+                  <p className="font-semibold text-teal-600">{stat.sabados.usados}/{stat.sabados.porSaldo}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-gray-500">Saldo</p>
@@ -920,7 +922,7 @@ export default function FarmaciaControl() {
                   {stat && (
                     <div className="flex gap-4 text-sm mt-2">
                       <span className="text-blue-600">Vac: {stat.vacaciones.disponibles}/{stat.vacaciones.total}</span>
-                      <span className="text-teal-600">Sáb: {stat.sabados.disponibles}</span>
+                      <span className="text-teal-600">Sáb: {stat.sabados.usados}/{stat.sabados.porSaldo}</span>
                       <span className={stat.horas.saldo >= 0 ? 'text-green-600' : 'text-red-600'}>Saldo: {stat.horas.saldo > 0 ? '+' : ''}{stat.horas.saldo}h</span>
                     </div>
                   )}
@@ -933,9 +935,45 @@ export default function FarmaciaControl() {
                   <Button icon={Plus} size="sm" variant="secondary" onClick={() => { setEmpleadoSeleccionado(emp); setEditandoHorario(null); setModalHorario(true); }}>Añadir</Button>
                 </div>
                 {horarios.filter(h => h.empleado_id === emp.id).map(h => (
-                  <div key={h.id} className="p-3 bg-gray-50 rounded-lg mb-2">
-                    <p className="font-medium text-sm">{h.descripcion}</p>
-                    <p className="text-xs text-gray-500">{h.fecha_inicio} → {h.fecha_fin || 'Indefinido'} - {calcularHorasSemanales(h)}h/sem</p>
+                  <div key={h.id} className="p-3 bg-gray-50 rounded-lg mb-2 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{h.descripcion}</p>
+                      <p className="text-xs text-gray-500">{h.fecha_inicio} → {h.fecha_fin || 'Indefinido'} - {calcularHorasSemanales(h)}h/sem</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        className="p-2 hover:bg-gray-200 rounded"
+                        onClick={() => { 
+                          setEmpleadoSeleccionado(emp);
+                          setEditandoHorario(h); 
+                          setFormHorario({
+                            fecha_inicio: h.fecha_inicio,
+                            fecha_fin: h.fecha_fin || '',
+                            descripcion: h.descripcion,
+                            lunes: h.lunes,
+                            martes: h.martes,
+                            miercoles: h.miercoles,
+                            jueves: h.jueves,
+                            viernes: h.viernes,
+                            sabado: h.sabado,
+                            domingo: h.domingo
+                          });
+                          setModalHorario(true); 
+                        }}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        className="p-2 hover:bg-red-100 rounded text-red-600"
+                        onClick={() => {
+                          if (confirm('¿Eliminar este horario?')) {
+                            setHorarios(horarios.filter(hr => hr.id !== h.id));
+                          }
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -969,12 +1007,12 @@ export default function FarmaciaControl() {
           </Card>
           <Card className="p-6">
             <p className="text-sm text-gray-500 mb-1">Sábados Libres</p>
-            <p className="text-2xl font-bold text-teal-600">{stat.sabados.disponibles}</p>
+            <p className="text-2xl font-bold text-teal-600">{stat.sabados.usados}/{stat.sabados.porSaldo}</p>
             <p className="text-xs text-gray-500 mt-1">
-              Por saldo: {stat.sabados.porSaldo} | Usados: {stat.sabados.usados}
+              Disponibles para coger: {stat.sabados.disponibles}
             </p>
             <p className="text-xs text-gray-500">
-              Saldo: {stat.sabados.saldoHoras > 0 ? '+' : ''}{stat.sabados.saldoHoras}h ({stat.sabados.horasPorSabado}h/sáb)
+              Saldo: {stat.sabados.saldoHoras > 0 ? '+' : ''}{stat.sabados.saldoHoras}h
             </p>
           </Card>
           <Card className="p-6">
@@ -1222,10 +1260,4 @@ export default function FarmaciaControl() {
       </Modal>
     </div>
   );
-
-// Renderizar la aplicación
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(FarmaciaControl));
-    </script>
-</body>
-</html>
+}
