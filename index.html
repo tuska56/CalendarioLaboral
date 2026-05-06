@@ -1,1263 +1,904 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar, Users, Settings, Plus, Edit2, Trash2, Save, X, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Calendario Farmacia</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap';);
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--pr:#1239AD;--pl:#EEF1FB;--se:#99B9AF;--bg:#f4f6fc;--bg2:#eef1f8;--bd:#e8ecf4;--tx:#111827;--t2:#6b7280;--t3:#9ca3af;--re:#ef4444;--sh:0 1px 3px rgba(0,0,0,.06)}
+body{font-family:'DM Sans',sans-serif;background:linear-gradient(135deg,var(--bg),var(--bg2));min-height:100vh;color:var(--tx);font-size:14px}
+.hdr{background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:100}
+.hi{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.lg{display:flex;align-items:center;gap:10px}
+.li{width:34px;height:34px;border-radius:8px;background:var(--pr);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px}
+.lt{font-size:16px;font-weight:700;color:var(--pr)}
+nav{display:flex;gap:2px;align-items:center}
+.nb{padding:6px 14px;border-radius:10px;font-size:13px;font-weight:500;border:none;cursor:pointer;background:transparent;color:var(--t2);transition:all .15s;font-family:inherit}
+.nb:hover{background:#f3f4f6;color:var(--tx)}.nb.on{background:var(--pr);color:#fff}
+.main{max-width:1200px;margin:0 auto;padding:24px 20px}
+.card{background:#fff;border-radius:18px;border:1px solid var(--bd);box-shadow:var(--sh);overflow:hidden}
+.cp{padding:20px}.ch{padding:18px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:16px;font-weight:700}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.pt{font-size:22px;font-weight:700;letter-spacing:-.4px}.ps{font-size:12px;color:var(--t3);margin-top:2px}
+.pa{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s;font-family:inherit}
+.bp{background:var(--pr);color:#fff}.bp:hover{background:#0f2d8a}
+.bo{background:#fff;color:var(--tx);border:1px solid var(--bd)}.bo:hover{background:#f9fafb}
+.bs{padding:5px 10px;font-size:12px;border-radius:8px}
+.bi{padding:6px;border-radius:8px;border:none;background:transparent;cursor:pointer;color:var(--t3);font-family:inherit;font-size:16px;line-height:1;display:inline-flex;align-items:center}
+.bi:hover{background:#f3f4f6;color:var(--t2)}.bi.d:hover{background:#fef2f2;color:var(--re)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.g4,.g3,.g2{grid-template-columns:1fr}}
+.sc{background:#fff;border-radius:18px;border:1px solid var(--bd);box-shadow:var(--sh);padding:18px;cursor:pointer;transition:border-color .15s}
+.sc:hover{border-color:#c7d2f0}.scl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.scn{font-size:28px;font-weight:700;line-height:1.1;margin-top:8px}.sch{font-size:11px;color:var(--t3);margin-top:2px}
+.smr{display:flex;justify-content:space-between;font-size:12px;margin-top:6px}
+.er{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #f9fafb;cursor:pointer;transition:background .1s}
+.er:last-child{border-bottom:none}.er:hover{background:#fafbfd}
+.av{width:38px;height:38px;border-radius:50%;background:var(--pr);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0}
+.calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.calm{font-size:17px;font-weight:700}
+.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.caldn{font-size:11px;font-weight:600;color:var(--t3);text-align:center;padding-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.calc{min-height:76px;border:1px solid var(--bd);border-radius:10px;padding:6px;background:rgba(255,255,255,.7);overflow:hidden;cursor:pointer}
+.calc:hover{border-color:#c7d2f0}.calc.sun{background:rgba(249,250,251,.8)}.calc.emp{background:transparent;border:none;cursor:default}
+.calcn{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:3px}
+.cev{font-size:9px;border-radius:4px;padding:1px 4px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eV{background:#dbeafe;color:#1e40af}.eA{background:#ede9fe;color:#6d28d9}.eSL{background:#cffafe;color:#0e7490}
+.eFT{background:#ffedd5;color:#c2410c}.eF{background:#fef3c7;color:#92400e}
+.ag{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.ag{grid-template-columns:repeat(2,1fr)}}
+.amt{font-size:11px;font-weight:700;color:var(--pr);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.amg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.adn{font-size:8px;font-weight:600;color:var(--t3);text-align:center;padding-bottom:2px}
+.ad{height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;cursor:pointer;transition:background .1s}
+.ad:hover{background:var(--pl)}.ad.sun{color:var(--t3)}.ad.fest{background:#fef3c7!important;color:#92400e!important;font-weight:700}
+.ad.guard{box-shadow:inset 0 0 0 2px var(--se)}.ad.today{box-shadow:inset 0 0 0 2px var(--pr);color:var(--pr);font-weight:700}
+.fg{margin-bottom:14px}.fl{font-size:13px;font-weight:500;color:var(--t2);display:block;margin-bottom:5px}
+.fh{font-size:11px;color:var(--t3);margin-top:3px}
+input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;font-family:inherit;color:var(--tx);background:#fff;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--pr)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.fr{grid-template-columns:1fr}}
+.tgl{width:36px;height:20px;border-radius:10px;background:var(--bd);position:relative;transition:background .2s;flex-shrink:0;cursor:pointer;display:inline-block}
+.tgl.on{background:var(--pr)}.tgl::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tgl.on::after{transform:translateX(16px)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s}
+.mo.open{opacity:1;pointer-events:all}
+.mbox{background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.15);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;transform:translateY(16px);transition:transform .2s}
+.mo.open .mbox{transform:none}
+.mhdr{padding:20px 20px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.mtx{font-size:16px;font-weight:700}.mbdy{padding:20px}.mft{padding:0 20px 20px;display:flex;gap:8px}
+.leg{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.legi{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.sp{color:#059669}.sn{color:var(--re)}
+.tc{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.tst{padding:10px 16px;border-radius:12px;font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.08);display:flex;align-items:center;gap:8px;max-width:320px;animation:sli .25s ease}
+.tst.ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+.tst.er{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+.tst.in{background:var(--pl);color:var(--pr);border:1px solid #c7d2f0}
+@keyframes sli{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+.empty{padding:36px 20px;text-align:center;color:var(--t3);font-size:13px}
+.ht{width:100%;border-collapse:collapse;font-size:12px}
+.ht th{text-align:left;color:var(--t3);font-weight:600;font-size:11px;padding:6px 8px;border-bottom:1px solid var(--bd)}
+.ht td{padding:8px;border-bottom:1px solid #f9fafb;vertical-align:middle}
+.ht tr:last-child td{border-bottom:none}
+.view{display:none}.view.on{display:block}
+.s{margin-bottom:24px}
+.bk{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--t2);background:none;border:none;cursor:pointer;padding:4px 0;margin-bottom:16px;font-family:inherit}
+.bk:hover{color:var(--pr)}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:10px}
+</style>
+</head>
+<body>
 
-// CONSTANTES
-const DIAS_SEMANA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const DIAS_SEMANA_COMPLETO = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+<header class="hdr">
+<div class="hi">
+<div class="lg">
+<div class="li">&#128138;</div>
+<span class="lt">Calendario Farmacia</span>
+</div>
+<nav>
+<button class="nb on" id="nb0" onclick="setVista('dashboard')">Dashboard</button>
+<button class="nb" id="nb1" onclick="setVista('empleados')">Empleados</button>
+<button class="nb" id="nb2" onclick="setVista('configuracion')">Config</button>
+<button class="bi" onclick="importarBackup()" title="Importar backup" style="margin-left:4px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+</button>
+</nav>
+</div>
+</header>
 
-const TIPOS_EVENTO = {
-  VACACIONES: { label: 'Vacaciones', color: 'bg-blue-500', bgLight: 'bg-blue-100', letra: 'V' },
-  ASUNTOS_PROPIOS: { label: 'Asuntos Propios', color: 'bg-purple-500', bgLight: 'bg-purple-100', letra: 'A' },
-  SABADO_LIBRE: { label: 'Sábado Libre', color: 'bg-teal-500', bgLight: 'bg-teal-100', letra: 'SL' },
-  FALTA_HORAS: { label: 'Falta', color: 'bg-red-500', bgLight: 'bg-red-100', letra: 'F' },
-  HORAS_EXTRA: { label: 'Horas Extra', color: 'bg-green-500', bgLight: 'bg-green-100', letra: '+' },
-  FESTIVO_TRABAJADO: { label: 'Festivo Trabajado', color: 'bg-orange-500', bgLight: 'bg-orange-100', letra: 'FT' },
+<div class="tc" id="tc"></div>
+
+<div class="main">
+<!-- DASHBOARD -->
+<div class="view on" id="v-dashboard">
+<div class="ph">
+<div><div class="pt">Dashboard</div><div class="ps" id="d-sub"></div></div>
+<div class="pa">
+<select id="anioSel" class="btn bo" onchange="setAnio(this.value)" style="padding:7px 12px;cursor:pointer">
+<option value="2024">2024</option><option value="2025">2025</option>
+<option value="2026" selected>2026</option><option value="2027">2027</option>
+</select>
+<button class="btn bo" onclick="exportarBackup()">&#128190; Backup</button>
+<button class="btn bo" onclick="exportarCSV()">&#128196; CSV</button>
+</div>
+</div>
+<div class="g4 s" id="d-stats"></div>
+<div class="card s">
+<div class="cp">
+<div class="calh">
+<div class="calm" id="cal-ml"></div>
+<div style="display:flex;gap:4px">
+<button class="bi" onclick="cambiarMes(-1)">&#8249;</button>
+<button class="bi" onclick="cambiarMes(1)">&#8250;</button>
+</div>
+</div>
+<div class="calg" id="cal-g"></div>
+<div class="leg" id="cal-leg"></div>
+</div>
+</div>
+<div class="card">
+<div class="ch"><span class="ct">Resumen Empleados</span></div>
+<div id="d-emp"></div>
+</div>
+</div>
+
+<!-- EMPLEADOS -->
+<div class="view" id="v-empleados">
+<div class="ph">
+<div><div class="pt">Empleados</div><div class="ps" id="e-sub"></div></div>
+<button class="btn bp" onclick="abrirModalEmpleado(null)">+ Nuevo</button>
+</div>
+<div id="e-list"></div>
+</div>
+
+<!-- EMPLEADO DETALLE -->
+<div class="view" id="v-empleado">
+<button class="bk" onclick="setVista('empleados')">&#8592; Volver</button>
+<div id="emp-det"></div>
+</div>
+
+<!-- CONFIG -->
+<div class="view" id="v-configuracion">
+<div class="ph">
+<div><div class="pt">Configuraci&#243;n</div><div class="ps" id="c-sub"></div></div>
+<select id="confAnioSel" class="btn bo" onchange="setAnio(this.value)" style="padding:7px 12px;cursor:pointer">
+<option value="2024">2024</option><option value="2025">2025</option>
+<option value="2026" selected>2026</option><option value="2027">2027</option>
+</select>
+</div>
+<div id="c-content"></div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="mo" id="mo">
+<div class="mbox">
+<div class="mhdr">
+<span class="mtx" id="m-title"></span>
+<button class="bi" onclick="cerrarModal()">&#10005;</button>
+</div>
+<div class="mbdy" id="m-body"></div>
+<div class="mft" id="m-footer"></div>
+</div>
+</div>
+
+<script>
+var MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+var DIAS=['Lun','Mar','Mi\u00e9','Jue','Vie','S\u00e1b','Dom'];
+var TIPOS={
+VACACIONES:{label:'Vacaciones',hex:'#1239AD',letra:'V',ev:'eV'},
+ASUNTOS_PROPIOS:{label:'Asuntos Propios',hex:'#7c3aed',letra:'A',ev:'eA'},
+SABADO_LIBRE:{label:'S\u00e1bado Libre',hex:'#0891b2',letra:'SL',ev:'eSL'},
+FALTA_HORAS:{label:'Falta',hex:'#ef4444',letra:'F',ev:'eF'},
+HORAS_EXTRA:{label:'Horas Extra',hex:'#22c55e',letra:'+',ev:'eV'},
+FESTIVO_TRABAJADO:{label:'Festivo Trabajado',hex:'#f97316',letra:'FT',ev:'eFT'}
+};
+var FB={
+2024:[
+{f:'2024-01-01',d:'A\u00f1o Nuevo',a:'NACIONAL',md:false},{f:'2024-01-06',d:'Reyes',a:'NACIONAL',md:false},
+{f:'2024-03-29',d:'Viernes Santo',a:'NACIONAL',md:false},{f:'2024-05-01',d:'D\u00eda del Trabajo',a:'NACIONAL',md:false},
+{f:'2024-06-09',d:'La Rioja',a:'AUTONOMICO',md:false},{f:'2024-06-24',d:'San Juan del Monte',a:'LOCAL',md:true},
+{f:'2024-08-15',d:'Asunci\u00f3n',a:'NACIONAL',md:false},{f:'2024-10-12',d:'Fiesta Nacional',a:'NACIONAL',md:false},
+{f:'2024-11-01',d:'Todos los Santos',a:'NACIONAL',md:false},{f:'2024-12-06',d:'Constituci\u00f3n',a:'NACIONAL',md:false},
+{f:'2024-12-08',d:'Inmaculada',a:'NACIONAL',md:false},{f:'2024-12-24',d:'Nochebuena',a:'CONVENIO',md:true},
+{f:'2024-12-25',d:'Navidad',a:'NACIONAL',md:false},{f:'2024-12-31',d:'Nochevieja',a:'CONVENIO',md:true}
+],
+2025:[
+{f:'2025-01-01',d:'A\u00f1o Nuevo',a:'NACIONAL',md:false},{f:'2025-01-06',d:'Reyes',a:'NACIONAL',md:false},
+{f:'2025-04-18',d:'Viernes Santo',a:'NACIONAL',md:false},{f:'2025-05-01',d:'D\u00eda del Trabajo',a:'NACIONAL',md:false},
+{f:'2025-06-09',d:'La Rioja',a:'AUTONOMICO',md:false},{f:'2025-06-23',d:'San Juan del Monte',a:'LOCAL',md:true},
+{f:'2025-08-15',d:'Asunci\u00f3n',a:'NACIONAL',md:false},{f:'2025-10-12',d:'Fiesta Nacional',a:'NACIONAL',md:false},
+{f:'2025-11-01',d:'Todos los Santos',a:'NACIONAL',md:false},{f:'2025-12-06',d:'Constituci\u00f3n',a:'NACIONAL',md:false},
+{f:'2025-12-08',d:'Inmaculada',a:'NACIONAL',md:false},{f:'2025-12-24',d:'Nochebuena',a:'CONVENIO',md:true},
+{f:'2025-12-25',d:'Navidad',a:'NACIONAL',md:false},{f:'2025-12-31',d:'Nochevieja',a:'CONVENIO',md:true}
+],
+2026:[
+{f:'2026-01-01',d:'A\u00f1o Nuevo',a:'NACIONAL',md:false},{f:'2026-01-06',d:'Reyes',a:'NACIONAL',md:false},
+{f:'2026-04-02',d:'Jueves Santo',a:'NACIONAL',md:false},{f:'2026-04-03',d:'Viernes Santo',a:'NACIONAL',md:false},
+{f:'2026-04-04',d:'S\u00e1bado Santo',a:'LOCAL',md:false},{f:'2026-04-23',d:'San Jorge / La Rioja',a:'AUTONOMICO',md:false},
+{f:'2026-05-01',d:'D\u00eda del Trabajo',a:'NACIONAL',md:false},{f:'2026-05-25',d:'Lunes Pascua',a:'LOCAL',md:false},
+{f:'2026-05-26',d:'Martes Pascua',a:'LOCAL',md:true},{f:'2026-08-15',d:'Asunci\u00f3n',a:'NACIONAL',md:false},
+{f:'2026-09-12',d:'Festivo local',a:'LOCAL',md:false},{f:'2026-10-12',d:'Fiesta Nacional',a:'NACIONAL',md:false},
+{f:'2026-11-01',d:'Todos los Santos',a:'NACIONAL',md:false},{f:'2026-12-07',d:'Constituci\u00f3n',a:'NACIONAL',md:false},
+{f:'2026-12-08',d:'Inmaculada',a:'NACIONAL',md:false},{f:'2026-12-24',d:'Nochebuena',a:'CONVENIO',md:true},
+{f:'2026-12-25',d:'Navidad',a:'NACIONAL',md:false},{f:'2026-12-31',d:'Nochevieja',a:'CONVENIO',md:true}
+],
+2027:[
+{f:'2027-01-01',d:'A\u00f1o Nuevo',a:'NACIONAL',md:false},{f:'2027-01-06',d:'Reyes',a:'NACIONAL',md:false},
+{f:'2027-03-25',d:'Jueves Santo',a:'NACIONAL',md:false},{f:'2027-03-26',d:'Viernes Santo',a:'NACIONAL',md:false},
+{f:'2027-04-23',d:'San Jorge / La Rioja',a:'AUTONOMICO',md:false},{f:'2027-05-01',d:'D\u00eda del Trabajo',a:'NACIONAL',md:false},
+{f:'2027-08-15',d:'Asunci\u00f3n',a:'NACIONAL',md:false},{f:'2027-10-12',d:'Fiesta Nacional',a:'NACIONAL',md:false},
+{f:'2027-11-01',d:'Todos los Santos',a:'NACIONAL',md:false},{f:'2027-12-06',d:'Constituci\u00f3n',a:'NACIONAL',md:false},
+{f:'2027-12-08',d:'Inmaculada',a:'NACIONAL',md:false},{f:'2027-12-24',d:'Nochebuena',a:'CONVENIO',md:true},
+{f:'2027-12-25',d:'Navidad',a:'NACIONAL',md:false},{f:'2027-12-31',d:'Nochevieja',a:'CONVENIO',md:true}
+]
 };
 
-const FESTIVOS_POR_ANIO = {
-  2024: [
-    { fecha: '2024-01-01', descripcion: 'Año Nuevo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-01-06', descripcion: 'Reyes', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-03-29', descripcion: 'Viernes Santo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-05-01', descripcion: 'Día del Trabajo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-06-09', descripcion: 'La Rioja', ambito: 'AUTONOMICO', medio_dia: false },
-    { fecha: '2024-06-24', descripcion: 'San Juan del Monte (Miranda)', ambito: 'LOCAL', medio_dia: true },
-    { fecha: '2024-08-15', descripcion: 'Asunción', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-10-12', descripcion: 'Fiesta Nacional', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-11-01', descripcion: 'Todos los Santos', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-12-06', descripcion: 'Constitución', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-12-08', descripcion: 'Inmaculada', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-12-24', descripcion: 'Nochebuena', ambito: 'CONVENIO', medio_dia: true },
-    { fecha: '2024-12-25', descripcion: 'Navidad', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2024-12-31', descripcion: 'Nochevieja', ambito: 'CONVENIO', medio_dia: true }
-  ],
-  2025: [
-    { fecha: '2025-01-01', descripcion: 'Año Nuevo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-01-06', descripcion: 'Reyes', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-04-18', descripcion: 'Viernes Santo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-05-01', descripcion: 'Día del Trabajo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-06-09', descripcion: 'La Rioja', ambito: 'AUTONOMICO', medio_dia: false },
-    { fecha: '2025-06-23', descripcion: 'San Juan del Monte (Miranda)', ambito: 'LOCAL', medio_dia: true },
-    { fecha: '2025-08-15', descripcion: 'Asunción', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-10-12', descripcion: 'Fiesta Nacional', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-11-01', descripcion: 'Todos los Santos', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-12-06', descripcion: 'Constitución', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-12-08', descripcion: 'Inmaculada', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-12-24', descripcion: 'Nochebuena', ambito: 'CONVENIO', medio_dia: true },
-    { fecha: '2025-12-25', descripcion: 'Navidad', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2025-12-31', descripcion: 'Nochevieja', ambito: 'CONVENIO', medio_dia: true }
-  ],
-  2026: [
-    { fecha: '2026-01-01', descripcion: 'Año Nuevo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-01-06', descripcion: 'Reyes', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-04-03', descripcion: 'Viernes Santo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-05-01', descripcion: 'Día del Trabajo', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-06-09', descripcion: 'La Rioja', ambito: 'AUTONOMICO', medio_dia: false },
-    { fecha: '2026-06-22', descripcion: 'San Juan del Monte (Miranda)', ambito: 'LOCAL', medio_dia: true },
-    { fecha: '2026-08-15', descripcion: 'Asunción', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-10-12', descripcion: 'Fiesta Nacional', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-11-01', descripcion: 'Todos los Santos', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-12-06', descripcion: 'Constitución', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-12-08', descripcion: 'Inmaculada', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-12-24', descripcion: 'Nochebuena', ambito: 'CONVENIO', medio_dia: true },
-    { fecha: '2026-12-25', descripcion: 'Navidad', ambito: 'NACIONAL', medio_dia: false },
-    { fecha: '2026-12-31', descripcion: 'Nochevieja', ambito: 'CONVENIO', medio_dia: true }
-  ]
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function pad(n){return String(n).padStart(2,'0');}
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function gid(id){return document.getElementById(id);}
+function sHTML(id,h){var e=gid(id);if(e)e.innerHTML=h;}
+function sTxt(id,t){var e=gid(id);if(e)e.textContent=t;}
+function gVal(id){var e=gid(id);return e?e.value:'';}
+
+function loadST(){try{var s=localStorage.getItem('fc3');if(s)return JSON.parse(s);}catch(e){}return null;}
+function saveST(){try{localStorage.setItem('fc3',JSON.stringify(ST));}catch(e){}}
+function defST(){
+var e1=uid(),e2=uid();
+return{
+anio:2026,
+conv:{2024:{h:1786,v:25,a:3},2025:{h:1786,v:25,a:3},2026:{h:1786,v:25,a:3},2027:{h:1786,v:25,a:3}},
+emps:[
+{id:e1,nombre:'Ana Garc\u00eda',alta:'2018-04-01',horas:null,activo:true,arr:0},
+{id:e2,nombre:'Carlos Mart\u00ednez',alta:'2021-09-15',horas:null,activo:true,arr:0}
+],
+evs:[
+{id:uid(),eid:e1,tipo:'VACACIONES',ini:'2026-07-01',fin:'2026-07-15',h:0,nota:''},
+{id:uid(),eid:e1,tipo:'VACACIONES',ini:'2026-12-26',fin:'2026-12-31',h:0,nota:''},
+{id:uid(),eid:e2,tipo:'VACACIONES',ini:'2026-08-01',fin:'2026-08-14',h:0,nota:''},
+{id:uid(),eid:e1,tipo:'ASUNTOS_PROPIOS',ini:'2026-03-10',fin:'2026-03-11',h:0,nota:''}
+],
+hors:[
+{id:uid(),eid:e1,desc:'Jornada completa',ini:'2026-01-01',fin:null,
+lunes:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+martes:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+miercoles:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+jueves:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+viernes:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+sabado:{on:true,i:'09:30',f:'14:00',i2:'',f2:''},
+domingo:{on:false,i:'',f:'',i2:'',f2:''}},
+{id:uid(),eid:e2,desc:'Jornada completa',ini:'2026-01-01',fin:null,
+lunes:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+martes:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+miercoles:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+jueves:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+viernes:{on:true,i:'09:00',f:'14:00',i2:'16:30',f2:'20:00'},
+sabado:{on:true,i:'09:30',f:'14:00',i2:'',f2:''},
+domingo:{on:false,i:'',f:'',i2:'',f2:''}}
+],
+gds:[],
+fman:[]
 };
-
-// Utilidades
-const calcularHoras = (inicio, fin) => {
-  if (!inicio || !fin) return 0;
-  const [h1, m1] = inicio.split(':').map(Number);
-  const [h2, m2] = fin.split(':').map(Number);
-  return ((h2 * 60 + m2) - (h1 * 60 + m1)) / 60;
-};
-
-const calcularHorasSemanales = (horario) => {
-  let total = 0;
-  ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'].forEach(dia => {
-    if (horario[dia]?.activo) total += calcularHoras(horario[dia].inicio, horario[dia].fin);
-  });
-  return Math.round(total * 100) / 100;
-};
-
-const calcularHorasDia = (fecha, horario) => {
-  const diaSemana = new Date(fecha + 'T12:00:00').getDay();
-  const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-  const nombreDia = dias[diaSemana];
-  if (!horario || !horario[nombreDia] || !horario[nombreDia].activo) return 0;
-  
-  // Si tiene jornada partida (inicio2 y fin2)
-  if (horario[nombreDia].inicio2 && horario[nombreDia].fin2) {
-    const manana = calcularHoras(horario[nombreDia].inicio, horario[nombreDia].fin);
-    const tarde = calcularHoras(horario[nombreDia].inicio2, horario[nombreDia].fin2);
-    return manana + tarde;
-  }
-  
-  return calcularHoras(horario[nombreDia].inicio, horario[nombreDia].fin);
-};
-
-const useMultiYear = (key, initialValue) => {
-  const [data, setData] = useState(() => {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : initialValue;
-  });
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(data));
-  }, [key, data]);
-  return [data, setData];
-};
-
-// MOTOR DE CÁLCULO CORREGIDO
-const MotorCalculo = {
-  calcularHorasAnuales: (empleado, convenio, eventos, festivos, horarios, simular = false) => {
-    const anio = convenio.anio;
-    let horasTotales = 0;  // Todas las horas laborables del año
-    let horasVacaciones = 0;
-    let horasFestivos = 0;
-    let horasFaltas = 0;
-    let horasExtra = 0;
-    const horasTeoricas = convenio.horas_anuales;
-    
-    const obtenerHorario = (fecha) => {
-      return horarios
-        .filter(h => h.empleado_id === empleado.id)
-        .sort((a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio))
-        .find(h => {
-          const fechaDate = new Date(fecha + 'T12:00:00');
-          const inicio = new Date(h.fecha_inicio + 'T12:00:00');
-          const fin = h.fecha_fin ? new Date(h.fecha_fin + 'T12:00:00') : new Date('2099-12-31');
-          return fechaDate >= inicio && fechaDate <= fin;
-        });
-    };
-    
-    for (let mes = 0; mes < 12; mes++) {
-      const diasMes = new Date(anio, mes + 1, 0).getDate();
-      for (let dia = 1; dia <= diasMes; dia++) {
-        const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-        const diaSemana = new Date(fecha + 'T12:00:00').getDay();
-        
-        // DOMINGOS NUNCA CUENTAN
-        if (diaSemana === 0) continue;
-        
-        const horario = obtenerHorario(fecha);
-        if (!horario) continue;
-        
-        const horasDia = calcularHorasDia(fecha, horario);
-        
-        // SIEMPRE sumar las horas del día al total
-        horasTotales += horasDia;
-        
-        const eventoDelDia = eventos.find(e => 
-          e.empleado_id === empleado.id && 
-          fecha >= e.fecha_inicio && 
-          fecha <= e.fecha_fin
-        );
-        
-        const festivoDelDia = festivos.find(f => f.fecha === fecha);
-        
-        // Identificar descuentos
-        if (eventoDelDia) {
-          if (!simular) {
-            switch (eventoDelDia.tipo_evento) {
-              case 'VACACIONES':
-              case 'ASUNTOS_PROPIOS':
-              case 'SABADO_LIBRE':
-                horasVacaciones += horasDia;
-                break;
-              case 'FALTA_HORAS':
-                horasFaltas += eventoDelDia.horas || 0;
-                break;
-              case 'HORAS_EXTRA':
-                horasExtra += eventoDelDia.horas || 0;
-                break;
-            }
-          }
-        } else if (festivoDelDia) {
-          if (festivoDelDia.medio_dia) {
-            // Medio día = solo trabaja la mañana (09:30-14:00 = 4.5h)
-            const horasMañana = 4.5;
-            horasTotales += horasMañana;
-            horasFestivos += horasMañana;
-          } else {
-            horasFestivos += horasDia;
-          }
-        }
-      }
-    }
-    
-    // Horas reales trabajadas = Total - Vacaciones - Festivos - Faltas + Extra
-    const horasRealesTrabajadas = horasTotales - horasVacaciones - horasFestivos - horasFaltas + horasExtra;
-    const saldo = horasRealesTrabajadas - horasTeoricas;
-    
-    return {
-      horasTeoricas: Math.round(horasTeoricas * 100) / 100,
-      horasRealesTrabajadas: Math.round(horasRealesTrabajadas * 100) / 100,
-      horasVacaciones: Math.round(horasVacaciones * 100) / 100,
-      horasFestivos: Math.round(horasFestivos * 100) / 100,
-      saldo: Math.round(saldo * 100) / 100
-    };
-  },
-  
-  calcularVacaciones: (empleado, convenio, eventos) => {
-    const vacacionesUsadas = eventos.filter(e => 
-      e.empleado_id === empleado.id && 
-      e.tipo_evento === 'VACACIONES'
-    ).reduce((total, e) => {
-      const inicio = new Date(e.fecha_inicio + 'T12:00:00');
-      const fin = new Date(e.fecha_fin + 'T12:00:00');
-      const dias = Math.round((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
-      return total + dias;
-    }, 0);
-    
-    return {
-      total: convenio.dias_vacaciones,
-      usadas: vacacionesUsadas,
-      disponibles: convenio.dias_vacaciones - vacacionesUsadas
-    };
-  },
-  
-  calcularAsuntosPropios: (empleado, convenio, eventos) => {
-    const asuntosUsados = eventos.filter(e => 
-      e.empleado_id === empleado.id && 
-      e.tipo_evento === 'ASUNTOS_PROPIOS'
-    ).reduce((total, e) => {
-      const inicio = new Date(e.fecha_inicio + 'T12:00:00');
-      const fin = new Date(e.fecha_fin + 'T12:00:00');
-      const dias = Math.round((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
-      return total + dias;
-    }, 0);
-    
-    return {
-      total: convenio.dias_asuntos_propios,
-      usados: asuntosUsados,
-      disponibles: convenio.dias_asuntos_propios - asuntosUsados
-    };
-  },
-  
-  // CÁLCULO CORRECTO: Solo horas L-V, sin incluir sábados
-  calcularSabadosLibres: (empleado, convenio, eventos, festivos, horarios) => {
-    const anio = convenio.anio;
-    
-    const obtenerHorario = (fecha) => {
-      return horarios
-        .filter(h => h.empleado_id === empleado.id)
-        .sort((a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio))
-        .find(h => {
-          const fechaDate = new Date(fecha + 'T12:00:00');
-          const inicio = new Date(h.fecha_inicio + 'T12:00:00');
-          const fin = h.fecha_fin ? new Date(h.fecha_fin + 'T12:00:00') : new Date('2099-12-31');
-          return fechaDate >= inicio && fechaDate <= fin;
-        });
-    };
-    
-    // Calcular SOLO horas L-V (SIN incluir sábados en el total)
-    let horasLV = 0;
-    let horasVacacionesLV = 0;
-    let horasFestivosLV = 0;
-    let horasFaltas = 0;
-    let horasExtra = 0;
-    let horasSabados = 0;
-    let cantidadSabados = 0;
-    
-    for (let mes = 0; mes < 12; mes++) {
-      const diasMes = new Date(anio, mes + 1, 0).getDate();
-      for (let dia = 1; dia <= diasMes; dia++) {
-        const fecha = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-        const diaSemana = new Date(fecha + 'T12:00:00').getDay();
-        
-        if (diaSemana === 0) continue; // Ignorar domingos
-        
-        const horario = obtenerHorario(fecha);
-        if (!horario) continue;
-        
-        const horasDia = calcularHorasDia(fecha, horario);
-        
-        // SEPARAR: Sábados vs L-V
-        if (diaSemana === 6) {
-          // Solo contar sábados para calcular horas promedio
-          cantidadSabados++;
-          horasSabados += horasDia;
-          continue; // NO incluir en cálculo L-V
-        }
-        
-        // Solo días L-V a partir de aquí
-        const evento = eventos.find(e => 
-          e.empleado_id === empleado.id && 
-          fecha >= e.fecha_inicio && 
-          fecha <= e.fecha_fin
-        );
-        
-        const festivo = festivos.find(f => f.fecha === fecha);
-        
-        // Sumar horas totales L-V
-        horasLV += horasDia;
-        
-        // Identificar eventos y festivos
-        if (evento) {
-          switch (evento.tipo_evento) {
-            case 'VACACIONES':
-            case 'ASUNTOS_PROPIOS':
-            case 'SABADO_LIBRE':
-              horasVacacionesLV += horasDia;
-              break;
-            case 'FALTA_HORAS':
-              horasFaltas += evento.horas || 0;
-              break;
-            case 'HORAS_EXTRA':
-              horasExtra += evento.horas || 0;
-              break;
-          }
-        } else if (festivo) {
-          if (festivo.medio_dia) {
-            // Medio día = solo trabaja la mañana (4.5h)
-            horasFestivosLV += 4.5;
-          } else {
-            horasFestivosLV += horasDia;
-          }
-        }
-      }
-    }
-    
-    const horasPromedioPorSabado = cantidadSabados > 0 ? horasSabados / cantidadSabados : 3.75;
-    
-    // Horas netas L-V = Total L-V - Vacaciones L-V - Festivos L-V - Faltas + Extra
-    const horasNetasLV = horasLV - horasVacacionesLV - horasFestivosLV - horasFaltas + horasExtra;
-    
-    // Saldo = Horas netas L-V - Convenio
-    const saldoHoras = horasNetasLV - convenio.horas_anuales;
-    
-    // Sábados disponibles por saldo
-    const sabadosPorSaldo = saldoHoras > 0 && horasPromedioPorSabado > 0
-      ? Math.floor(saldoHoras / horasPromedioPorSabado)
-      : 0;
-    
-    // Sábados ya usados
-    const sabadosUsados = eventos.filter(e => 
-      e.empleado_id === empleado.id && 
-      e.tipo_evento === 'SABADO_LIBRE'
-    ).reduce((total, e) => {
-      const inicio = new Date(e.fecha_inicio + 'T12:00:00');
-      const fin = new Date(e.fecha_fin + 'T12:00:00');
-      let count = 0;
-      for (let d = new Date(inicio); d <= fin; d.setDate(d.getDate() + 1)) {
-        if (d.getDay() === 6) count++;
-      }
-      return total + count;
-    }, 0);
-    
-    return {
-      porSaldo: sabadosPorSaldo,
-      disponibles: Math.max(0, sabadosPorSaldo - sabadosUsados),
-      usados: sabadosUsados,
-      saldoHoras: Math.round(saldoHoras * 100) / 100,
-      horasPorSabado: Math.round(horasPromedioPorSabado * 100) / 100
-    };
-  }
-};
-
-// Componente Calendario Anual
-const CalendarioAnual = ({ anio, empleado, eventos, festivos, guardias }) => {
-  const obtenerEventosDia = (fecha) => {
-    const eventos_dia = [];
-    
-    // Eventos del empleado
-    const evento = eventos.find(e => 
-      e.empleado_id === empleado.id && 
-      fecha >= e.fecha_inicio && 
-      fecha <= e.fecha_fin
-    );
-    if (evento) eventos_dia.push({ tipo: 'evento', data: evento });
-    
-    // Festivos
-    const festivo = festivos.find(f => f.fecha === fecha);
-    if (festivo) eventos_dia.push({ tipo: 'festivo', data: festivo });
-    
-    // Guardias
-    const guardia = guardias.find(g => g.empleado_id === empleado.id && g.fecha === fecha);
-    if (guardia) eventos_dia.push({ tipo: 'guardia', data: guardia });
-    
-    return eventos_dia;
-  };
-  
-  return (
-    <div className="space-y-4">
-      <h3 className="font-bold text-gray-900">Calendario Anual {anio}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(12)].map((_, mesIdx) => {
-          const primerDia = new Date(anio, mesIdx, 1);
-          const ultimoDia = new Date(anio, mesIdx + 1, 0);
-          const diasMes = ultimoDia.getDate();
-          const primerDiaSemana = primerDia.getDay();
-          
-          return (
-            <div key={mesIdx} className="border rounded-lg p-3">
-              <h4 className="font-semibold text-center mb-2">{MESES[mesIdx]}</h4>
-              <div className="grid grid-cols-7 gap-1">
-                {DIAS_SEMANA.map(d => (
-                  <div key={d} className="text-xs font-bold text-center text-gray-600">{d}</div>
-                ))}
-                {[...Array(primerDiaSemana)].map((_, i) => <div key={`empty-${i}`} />)}
-                {[...Array(diasMes)].map((_, dia) => {
-                  const fecha = `${anio}-${String(mesIdx + 1).padStart(2, '0')}-${String(dia + 1).padStart(2, '0')}`;
-                  const diaSemana = new Date(fecha + 'T12:00:00').getDay();
-                  const eventosDia = obtenerEventosDia(fecha);
-                  
-                  let bgColor = 'bg-white';
-                  let letra = '';
-                  
-                  if (diaSemana === 0) bgColor = 'bg-gray-100';
-                  
-                  eventosDia.forEach(ev => {
-                    if (ev.tipo === 'evento') {
-                      bgColor = TIPOS_EVENTO[ev.data.tipo_evento].bgLight;
-                      letra = TIPOS_EVENTO[ev.data.tipo_evento].letra;
-                    } else if (ev.tipo === 'festivo') {
-                      bgColor = 'bg-yellow-100';
-                      letra = ev.data.medio_dia ? 'F½' : 'F';
-                    } else if (ev.tipo === 'guardia') {
-                      letra = letra ? letra + ',G' : 'G';
-                    }
-                  });
-                  
-                  return (
-                    <div key={dia} className={`h-8 ${bgColor} rounded flex flex-col items-center justify-center text-xs relative`}>
-                      <span className="font-semibold">{dia + 1}</span>
-                      {letra && <span className="text-[8px] font-bold absolute bottom-0">{letra}</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex flex-wrap gap-4 text-xs">
-        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-blue-100 rounded"></div><span>V - Vacaciones</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-purple-100 rounded"></div><span>A - Asuntos Propios</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-teal-100 rounded"></div><span>SL - Sábado Libre</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-100 rounded"></div><span>F - Falta</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-green-100 rounded"></div><span>+ - Horas Extra</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-yellow-100 rounded"></div><span>F - Festivo</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-pink-100 rounded"></div><span>G - Guardia</span></div>
-      </div>
-    </div>
-  );
-};
-
-// Calendario Global
-const CalendarioGlobal = ({ anio, empleados, eventos, festivos }) => {
-  const [mesActual, setMesActual] = useState(new Date().getMonth());
-  
-  const obtenerEventosDia = (fecha) => {
-    const eventos_dia = [];
-    
-    empleados.forEach(emp => {
-      const evento = eventos.find(e => 
-        e.empleado_id === emp.id && 
-        ['VACACIONES', 'ASUNTOS_PROPIOS', 'SABADO_LIBRE'].includes(e.tipo_evento) &&
-        fecha >= e.fecha_inicio && 
-        fecha <= e.fecha_fin
-      );
-      if (evento) {
-        eventos_dia.push({
-          empleado: emp.nombre,
-          letra: TIPOS_EVENTO[evento.tipo_evento].letra,
-          color: TIPOS_EVENTO[evento.tipo_evento].bgLight
-        });
-      }
-    });
-    
-    const festivo = festivos.find(f => f.fecha === fecha);
-    if (festivo) {
-      eventos_dia.push({
-        empleado: festivo.descripcion,
-        letra: festivo.medio_dia ? 'F½' : 'F',
-        color: 'bg-yellow-100'
-      });
-    }
-    
-    return eventos_dia;
-  };
-  
-  const primerDia = new Date(anio, mesActual, 1);
-  const ultimoDia = new Date(anio, mesActual + 1, 0);
-  const diasMes = ultimoDia.getDate();
-  const primerDiaSemana = primerDia.getDay();
-  
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold text-gray-900">Calendario Global - {MESES[mesActual]} {anio}</h3>
-        <div className="flex gap-2">
-          <button onClick={() => setMesActual((mesActual - 1 + 12) % 12)} className="p-2 hover:bg-gray-100 rounded">
-            <ChevronLeft size={20} />
-          </button>
-          <button onClick={() => setMesActual((mesActual + 1) % 12)} className="p-2 hover:bg-gray-100 rounded">
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-7 gap-2">
-        {DIAS_SEMANA.map(d => (
-          <div key={d} className="text-sm font-bold text-center text-gray-600 p-2">{d}</div>
-        ))}
-        {[...Array(primerDiaSemana)].map((_, i) => <div key={`empty-${i}`} className="h-24" />)}
-        {[...Array(diasMes)].map((_, dia) => {
-          const fecha = `${anio}-${String(mesActual + 1).padStart(2, '0')}-${String(dia + 1).padStart(2, '0')}`;
-          const diaSemana = new Date(fecha + 'T12:00:00').getDay();
-          const eventosDia = obtenerEventosDia(fecha);
-          
-          return (
-            <div key={dia} className={`h-24 border rounded-lg p-2 ${diaSemana === 0 ? 'bg-gray-50' : 'bg-white'} overflow-y-auto`}>
-              <div className="font-semibold text-sm mb-1">{dia + 1}</div>
-              <div className="space-y-1">
-                {eventosDia.map((ev, idx) => (
-                  <div key={idx} className={`text-[10px] ${ev.color} rounded px-1`}>
-                    {ev.empleado} - {ev.letra}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-// COMPONENTES UI (simplificados)
-const Card = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-xl shadow-sm border border-gray-100 ${className}`}>{children}</div>
-);
-
-const Button = ({ children, onClick, variant = 'primary', icon: Icon, size = 'md', disabled = false, className = '' }) => {
-  const variants = {
-    primary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-    secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-700',
-    danger: 'bg-red-600 hover:bg-red-700 text-white',
-    ghost: 'hover:bg-gray-100 text-gray-700'
-  };
-  const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2' };
-  return (
-    <button onClick={onClick} disabled={disabled} className={`flex items-center gap-2 rounded-lg font-medium transition-all ${variants[variant]} ${sizes[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
-      {Icon && <Icon size={18} />}
-      {children}
-    </button>
-  );
-};
-
-const Input = ({ label, type = 'text', value, onChange, placeholder = '', min, max, step, required = false }) => (
-  <div className="flex flex-col gap-1">
-    {label && <label className="text-sm font-medium text-gray-700">{label} {required && <span className="text-red-500">*</span>}</label>}
-    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} min={min} max={max} step={step} required={required} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-  </div>
-);
-
-const Select = ({ label, value, onChange, options, required = false }) => (
-  <div className="flex flex-col gap-1">
-    {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
-    <select value={value} onChange={(e) => onChange(e.target.value)} required={required} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-      {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-    </select>
-  </div>
-);
-
-const Checkbox = ({ label, checked, onChange }) => (
-  <label className="flex items-center gap-2 cursor-pointer">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 text-emerald-600 rounded" />
-    <span className="text-sm text-gray-700">{label}</span>
-  </label>
-);
-
-const Modal = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><X size={24} /></button>
-        </div>
-        <div className="p-6">{children}</div>
-      </div>
-    </div>
-  );
-};
-
-// APLICACIÓN PRINCIPAL
-export default function FarmaciaControl() {
-  const [vista, setVista] = useState('dashboard');
-  const [datosPorAnio, setDatosPorAnio] = useMultiYear('farmacia_datos', {});
-  const [anioActual, setAnioActual] = useState(2026);
-  const [modoSimulacion, setModoSimulacion] = useState(false);
-  
-  const getDatosAnio = (anio) => {
-    if (!datosPorAnio[anio]) {
-      return {
-        empleados: anio === 2026 ? [
-          { id: 1, nombre: 'Ana García', fecha_alta: '2026-01-01', activo: true, horas_arrastre: 0 },
-          { id: 2, nombre: 'Carlos López', fecha_alta: '2026-01-01', activo: true, horas_arrastre: 0 }
-        ] : [],
-        eventos: anio === 2026 ? [
-          // Ana García: 30 días vacaciones (15 julio + 15 agosto)
-          { id: 1, empleado_id: 1, tipo_evento: 'VACACIONES', fecha_inicio: '2026-07-01', fecha_fin: '2026-07-15', horas: null },
-          { id: 2, empleado_id: 1, tipo_evento: 'VACACIONES', fecha_inicio: '2026-08-01', fecha_fin: '2026-08-15', horas: null },
-          // Carlos López: 30 días vacaciones (15 julio + 15 agosto)
-          { id: 3, empleado_id: 2, tipo_evento: 'VACACIONES', fecha_inicio: '2026-07-16', fecha_fin: '2026-07-30', horas: null },
-          { id: 4, empleado_id: 2, tipo_evento: 'VACACIONES', fecha_inicio: '2026-08-16', fecha_fin: '2026-08-30', horas: null }
-        ] : [],
-        festivos: (FESTIVOS_POR_ANIO[anio] || []).map((f, i) => ({ ...f, id: i + 1 })),
-        horarios: anio === 2026 ? [
-          { id: 1, empleado_id: 1, fecha_inicio: '2026-01-01', fecha_fin: null, descripcion: 'Jornada partida',
-            lunes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            martes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            miercoles: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            jueves: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            viernes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            sabado: { activo: true, inicio: '09:45', fin: '13:30' },
-            domingo: { activo: false, inicio: '', fin: '' }
-          },
-          { id: 2, empleado_id: 2, fecha_inicio: '2026-01-01', fecha_fin: null, descripcion: 'Jornada partida',
-            lunes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            martes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            miercoles: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            jueves: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            viernes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-            sabado: { activo: true, inicio: '09:45', fin: '13:30' },
-            domingo: { activo: false, inicio: '', fin: '' }
-          }
-        ] : [],
-        guardias: [],
-        convenio: { anio, horas_anuales: 1785, dias_vacaciones: 30, dias_asuntos_propios: 3 }
-      };
-    }
-    return datosPorAnio[anio];
-  };
-  
-  const datosActuales = getDatosAnio(anioActual);
-  const [empleados, setEmpleados] = useState(datosActuales.empleados);
-  const [convenio, setConvenio] = useState(datosActuales.convenio);
-  const [eventos, setEventos] = useState(datosActuales.eventos);
-  const [festivos, setFestivos] = useState(datosActuales.festivos);
-  const [horarios, setHorarios] = useState(datosActuales.horarios);
-  const [guardias, setGuardias] = useState(datosActuales.guardias);
-  
-  useEffect(() => {
-    setDatosPorAnio(prev => ({
-      ...prev,
-      [anioActual]: { empleados, eventos, festivos, horarios, guardias, convenio }
-    }));
-  }, [empleados, eventos, festivos, horarios, guardias, convenio, anioActual]);
-  
-  const cambiarAnio = (nuevoAnio) => {
-    setAnioActual(nuevoAnio);
-    const nuevosDatos = getDatosAnio(nuevoAnio);
-    
-    // Si el nuevo año no tiene empleados, copiar los activos del año actual
-    if (nuevosDatos.empleados.length === 0 && empleados.length > 0) {
-      const empleadosActivos = empleados.filter(e => e.activo).map(e => ({
-        ...e,
-        // Mantener las horas de arrastre si las tiene
-        horas_arrastre: e.horas_arrastre || 0
-      }));
-      nuevosDatos.empleados = empleadosActivos;
-      
-      // Crear horarios base para los empleados copiados
-      nuevosDatos.horarios = empleadosActivos.map(emp => {
-        const horarioAnterior = horarios.find(h => h.empleado_id === emp.id);
-        if (horarioAnterior) {
-          return {
-            ...horarioAnterior,
-            id: Date.now() + emp.id,
-            fecha_inicio: `${nuevoAnio}-01-01`,
-            fecha_fin: null
-          };
-        }
-        return {
-          id: Date.now() + emp.id,
-          empleado_id: emp.id,
-          fecha_inicio: `${nuevoAnio}-01-01`,
-          fecha_fin: null,
-          descripcion: 'Jornada completa',
-          lunes: { activo: true, inicio: '09:30', fin: '19:30' },
-          martes: { activo: true, inicio: '09:30', fin: '19:30' },
-          miercoles: { activo: true, inicio: '09:30', fin: '19:30' },
-          jueves: { activo: true, inicio: '09:30', fin: '19:30' },
-          viernes: { activo: true, inicio: '09:30', fin: '19:30' },
-          sabado: { activo: true, inicio: '09:45', fin: '13:30' },
-          domingo: { activo: false, inicio: '', fin: '' }
-        };
-      });
-    }
-    
-    setEmpleados(nuevosDatos.empleados);
-    setConvenio({ ...nuevosDatos.convenio, anio: nuevoAnio });
-    
-    const festivosPredefinidos = FESTIVOS_POR_ANIO[nuevoAnio] || [];
-    const festivosManuales = nuevosDatos.festivos.filter(f => f.ambito === 'MANUAL');
-    setFestivos([...festivosPredefinidos.map((f, i) => ({ ...f, id: Date.now() + i })), ...festivosManuales]);
-    
-    setEventos(nuevosDatos.eventos);
-    setHorarios(nuevosDatos.horarios);
-    setGuardias(nuevosDatos.guardias);
-  };
-  
-  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
-  const [modalEmpleado, setModalEmpleado] = useState(false);
-  const [modalEvento, setModalEvento] = useState(false);
-  const [modalHorario, setModalHorario] = useState(false);
-  const [modalGuardia, setModalGuardia] = useState(false);
-  const [modalFestivo, setModalFestivo] = useState(false);
-  const [modalTraspaso, setModalTraspaso] = useState(false);
-  
-  const [editandoEmpleado, setEditandoEmpleado] = useState(null);
-  const [editandoEvento, setEditandoEvento] = useState(null);
-  const [editandoHorario, setEditandoHorario] = useState(null);
-  const [editandoGuardia, setEditandoGuardia] = useState(null);
-  const [editandoFestivo, setEditandoFestivo] = useState(null);
-  
-  const [formEmpleado, setFormEmpleado] = useState({ nombre: '', fecha_alta: '' });
-  const [formEvento, setFormEvento] = useState({ tipo_evento: 'VACACIONES', fecha_inicio: '', fecha_fin: '', horas: 0 });
-  const [formHorario, setFormHorario] = useState({
-    fecha_inicio: '', fecha_fin: '', descripcion: '',
-    lunes: { activo: true, inicio: '09:30', fin: '19:30' },
-    martes: { activo: true, inicio: '09:30', fin: '19:30' },
-    miercoles: { activo: true, inicio: '09:30', fin: '19:30' },
-    jueves: { activo: true, inicio: '09:30', fin: '19:30' },
-    viernes: { activo: true, inicio: '09:30', fin: '19:30' },
-    sabado: { activo: true, inicio: '09:45', fin: '13:30' },
-    domingo: { activo: false, inicio: '', fin: '' }
-  });
-  const [formGuardia, setFormGuardia] = useState({ empleado_id: '', fecha: '', tipo: '', observaciones: '' });
-  const [formFestivo, setFormFestivo] = useState({ fecha: '', descripcion: '', ambito: 'MANUAL', medio_dia: false });
-  const [formTraspaso, setFormTraspaso] = useState({ empleado_id: '', horas: 0 });
-  
-  const estadisticas = useMemo(() => {
-    const stats = empleados.filter(e => e.activo).map(emp => {
-      const horas = MotorCalculo.calcularHorasAnuales(emp, convenio, eventos, festivos, horarios, modoSimulacion);
-      const vacaciones = MotorCalculo.calcularVacaciones(emp, convenio, eventos);
-      const asuntos = MotorCalculo.calcularAsuntosPropios(emp, convenio, eventos);
-      const sabados = MotorCalculo.calcularSabadosLibres(emp, convenio, eventos, festivos, horarios);
-      return { empleado: emp, horas, vacaciones, asuntos, sabados };
-    });
-    return { empleados: stats, totalEmpleados: stats.length };
-  }, [empleados, convenio, eventos, festivos, horarios, modoSimulacion]);
-  
-  // Handlers (igual que antes, omitidos por brevedad)
-  const guardarEmpleado = () => {
-    if (!formEmpleado.nombre || !formEmpleado.fecha_alta) return;
-    if (editandoEmpleado) {
-      setEmpleados(empleados.map(e => e.id === editandoEmpleado.id ? { ...e, ...formEmpleado } : e));
-      setEditandoEmpleado(null);
-    } else {
-      setEmpleados([...empleados, { id: Date.now(), ...formEmpleado, activo: true, horas_arrastre: 0 }]);
-    }
-    setFormEmpleado({ nombre: '', fecha_alta: '' });
-    setModalEmpleado(false);
-  };
-  
-  const guardarEvento = () => {
-    if (!empleadoSeleccionado || !formEvento.fecha_inicio || !formEvento.fecha_fin) return;
-    const eventoData = {
-      empleado_id: empleadoSeleccionado.id,
-      tipo_evento: formEvento.tipo_evento,
-      fecha_inicio: formEvento.fecha_inicio,
-      fecha_fin: formEvento.fecha_fin,
-      horas: ['FALTA_HORAS', 'HORAS_EXTRA'].includes(formEvento.tipo_evento) ? parseFloat(formEvento.horas) || 0 : null
-    };
-    if (editandoEvento) {
-      setEventos(eventos.map(e => e.id === editandoEvento.id ? { ...e, ...eventoData } : e));
-      setEditandoEvento(null);
-    } else {
-      setEventos([...eventos, { id: Date.now(), ...eventoData }]);
-    }
-    setFormEvento({ tipo_evento: 'VACACIONES', fecha_inicio: '', fecha_fin: '', horas: 0 });
-    setModalEvento(false);
-  };
-  
-  const guardarHorario = () => {
-    if (!empleadoSeleccionado || !formHorario.fecha_inicio) return;
-    const horarioData = { empleado_id: empleadoSeleccionado.id, ...formHorario };
-    if (editandoHorario) {
-      setHorarios(horarios.map(h => h.id === editandoHorario.id ? { ...h, ...horarioData } : h));
-      setEditandoHorario(null);
-    } else {
-      setHorarios([...horarios, { id: Date.now(), ...horarioData }]);
-    }
-    setFormHorario({
-      fecha_inicio: '', fecha_fin: '', descripcion: '',
-      lunes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-      martes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-      miercoles: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-      jueves: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-      viernes: { activo: true, inicio: '09:30', fin: '14:00', inicio2: '16:45', fin2: '19:30' },
-      sabado: { activo: true, inicio: '09:45', fin: '13:30' },
-      domingo: { activo: false, inicio: '', fin: '' }
-    });
-    setModalHorario(false);
-  };
-  
-  const guardarGuardia = () => {
-    if (!formGuardia.empleado_id || !formGuardia.fecha || !formGuardia.tipo) return;
-    const guardiaData = {
-      empleado_id: parseInt(formGuardia.empleado_id),
-      fecha: formGuardia.fecha,
-      tipo: formGuardia.tipo,
-      observaciones: formGuardia.observaciones
-    };
-    if (editandoGuardia) {
-      setGuardias(guardias.map(g => g.id === editandoGuardia.id ? { ...g, ...guardiaData } : g));
-      setEditandoGuardia(null);
-    } else {
-      setGuardias([...guardias, { id: Date.now(), ...guardiaData }]);
-    }
-    setFormGuardia({ empleado_id: '', fecha: '', tipo: '', observaciones: '' });
-    setModalGuardia(false);
-  };
-  
-  const guardarFestivo = () => {
-    if (!formFestivo.fecha || !formFestivo.descripcion) return;
-    const festivoData = {
-      fecha: formFestivo.fecha,
-      descripcion: formFestivo.descripcion,
-      ambito: formFestivo.ambito,
-      medio_dia: formFestivo.medio_dia
-    };
-    if (editandoFestivo) {
-      setFestivos(festivos.map(f => f.id === editandoFestivo.id ? { ...f, ...festivoData } : f));
-      setEditandoFestivo(null);
-    } else {
-      setFestivos([...festivos, { id: Date.now(), ...festivoData }]);
-    }
-    setFormFestivo({ fecha: '', descripcion: '', ambito: 'MANUAL', medio_dia: false });
-    setModalFestivo(false);
-  };
-  
-  const traspasarHoras = () => {
-    if (!formTraspaso.empleado_id || !formTraspaso.horas) return;
-    setEmpleados(empleados.map(e => 
-      e.id === parseInt(formTraspaso.empleado_id)
-        ? { ...e, horas_arrastre: parseFloat(formTraspaso.horas) }
-        : e
-    ));
-    setFormTraspaso({ empleado_id: '', horas: 0 });
-    setModalTraspaso(false);
-    alert('Horas traspasadas correctamente');
-  };
-  
-  // VISTAS
-  const VistaDashboard = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <Select value={anioActual} onChange={(v) => cambiarAnio(parseInt(v))} options={[2024, 2025, 2026].map(a => ({ value: a, label: `Año ${a}` }))} />
-      </div>
-      
-      <Card className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Empleados Activos</p>
-            <p className="text-3xl font-bold text-gray-900">{estadisticas.totalEmpleados}</p>
-          </div>
-          <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-            <Users className="text-emerald-600" size={24} />
-          </div>
-        </div>
-      </Card>
-      
-      <Card className="p-6">
-        <CalendarioGlobal anio={anioActual} empleados={empleados} eventos={eventos} festivos={festivos} />
-      </Card>
-      
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Resumen Empleados</h2>
-        <div className="space-y-3">
-          {estadisticas.empleados.map(stat => (
-            <div key={stat.empleado.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors" onClick={() => { setEmpleadoSeleccionado(stat.empleado); setVista('empleado'); }}>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900">{stat.empleado.nombre}</p>
-                <p className="text-sm text-gray-500">Alta: {stat.empleado.fecha_alta}</p>
-              </div>
-              <div className="flex gap-6 text-sm">
-                <div className="text-center">
-                  <p className="text-gray-500">Vacaciones</p>
-                  <p className="font-semibold text-blue-600">{stat.vacaciones.disponibles}/{stat.vacaciones.total}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-500">Sábados</p>
-                  <p className="font-semibold text-teal-600">{stat.sabados.usados}/{stat.sabados.porSaldo}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-500">Saldo</p>
-                  <p className={`font-semibold ${stat.horas.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.horas.saldo > 0 ? '+' : ''}{stat.horas.saldo}h
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-  
-  const VistaEmpleados = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Empleados</h1>
-        <Button icon={Plus} onClick={() => { setEditandoEmpleado(null); setFormEmpleado({ nombre: '', fecha_alta: '' }); setModalEmpleado(true); }}>Nuevo</Button>
-      </div>
-      <div className="grid gap-4">
-        {empleados.map(emp => {
-          const stat = estadisticas.empleados.find(s => s.empleado.id === emp.id);
-          return (
-            <Card key={emp.id} className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">{emp.nombre}</h3>
-                  <p className="text-sm text-gray-600 mt-1">Alta: {emp.fecha_alta}</p>
-                  {stat && (
-                    <div className="flex gap-4 text-sm mt-2">
-                      <span className="text-blue-600">Vac: {stat.vacaciones.disponibles}/{stat.vacaciones.total}</span>
-                      <span className="text-teal-600">Sáb: {stat.sabados.usados}/{stat.sabados.porSaldo}</span>
-                      <span className={stat.horas.saldo >= 0 ? 'text-green-600' : 'text-red-600'}>Saldo: {stat.horas.saldo > 0 ? '+' : ''}{stat.horas.saldo}h</span>
-                    </div>
-                  )}
-                </div>
-                <Button variant="secondary" size="sm" onClick={() => { setEmpleadoSeleccionado(emp); setVista('empleado'); }}>Detalles</Button>
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-gray-900">Horarios</h4>
-                  <Button icon={Plus} size="sm" variant="secondary" onClick={() => { setEmpleadoSeleccionado(emp); setEditandoHorario(null); setModalHorario(true); }}>Añadir</Button>
-                </div>
-                {horarios.filter(h => h.empleado_id === emp.id).map(h => (
-                  <div key={h.id} className="p-3 bg-gray-50 rounded-lg mb-2 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{h.descripcion}</p>
-                      <p className="text-xs text-gray-500">{h.fecha_inicio} → {h.fecha_fin || 'Indefinido'} - {calcularHorasSemanales(h)}h/sem</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button 
-                        className="p-2 hover:bg-gray-200 rounded"
-                        onClick={() => { 
-                          setEmpleadoSeleccionado(emp);
-                          setEditandoHorario(h); 
-                          setFormHorario({
-                            fecha_inicio: h.fecha_inicio,
-                            fecha_fin: h.fecha_fin || '',
-                            descripcion: h.descripcion,
-                            lunes: h.lunes,
-                            martes: h.martes,
-                            miercoles: h.miercoles,
-                            jueves: h.jueves,
-                            viernes: h.viernes,
-                            sabado: h.sabado,
-                            domingo: h.domingo
-                          });
-                          setModalHorario(true); 
-                        }}
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button 
-                        className="p-2 hover:bg-red-100 rounded text-red-600"
-                        onClick={() => {
-                          if (confirm('¿Eliminar este horario?')) {
-                            setHorarios(horarios.filter(hr => hr.id !== h.id));
-                          }
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-  
-  const VistaEmpleado = () => {
-    if (!empleadoSeleccionado) return null;
-    const stat = estadisticas.empleados.find(e => e.empleado.id === empleadoSeleccionado.id);
-    if (!stat) return null;
-    
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" icon={ChevronLeft} onClick={() => setVista('dashboard')}>Volver</Button>
-          <h1 className="text-3xl font-bold text-gray-900">{empleadoSeleccionado.nombre}</h1>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-6">
-            <p className="text-sm text-gray-500 mb-1">Vacaciones</p>
-            <p className="text-2xl font-bold text-blue-600">{stat.vacaciones.disponibles}/{stat.vacaciones.total}</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-gray-500 mb-1">Asuntos Propios</p>
-            <p className="text-2xl font-bold text-purple-600">{stat.asuntos.disponibles}/{stat.asuntos.total}</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-gray-500 mb-1">Sábados Libres</p>
-            <p className="text-2xl font-bold text-teal-600">{stat.sabados.usados}/{stat.sabados.porSaldo}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              Disponibles para coger: {stat.sabados.disponibles}
-            </p>
-            <p className="text-xs text-gray-500">
-              Saldo: {stat.sabados.saldoHoras > 0 ? '+' : ''}{stat.sabados.saldoHoras}h
-            </p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-gray-500 mb-1">Saldo Horas</p>
-            <p className={`text-2xl font-bold ${stat.horas.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {stat.horas.saldo > 0 ? '+' : ''}{stat.horas.saldo}h
-            </p>
-          </Card>
-        </div>
-        
-        <div className="flex gap-2 items-center">
-          <Button icon={Plus} onClick={() => setModalEvento(true)}>Añadir Evento</Button>
-          <Checkbox label="Simulación (sin vacaciones)" checked={modoSimulacion} onChange={setModoSimulacion} />
-        </div>
-        
-        <Card className="p-6">
-          <CalendarioAnual anio={anioActual} empleado={empleadoSeleccionado} eventos={eventos} festivos={festivos} guardias={guardias} />
-        </Card>
-        
-        <Card className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Eventos</h2>
-          <div className="space-y-2">
-            {eventos.filter(e => e.empleado_id === empleadoSeleccionado.id).map(ev => (
-              <div key={ev.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${TIPOS_EVENTO[ev.tipo_evento].color}`}></div>
-                  <div>
-                    <p className="font-medium text-gray-900">{TIPOS_EVENTO[ev.tipo_evento].label}</p>
-                    <p className="text-sm text-gray-500">{ev.fecha_inicio} → {ev.fecha_fin}</p>
-                  </div>
-                </div>
-                <Button variant="ghost" icon={Trash2} size="sm" onClick={() => setEventos(eventos.filter(e => e.id !== ev.id))} className="!p-2" />
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-    );
-  };
-  
-  const VistaConfiguracion = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
-        <div className="flex gap-3">
-          <Select value={anioActual} onChange={(v) => cambiarAnio(parseInt(v))} options={[2024, 2025, 2026].map(a => ({ value: a, label: `Año ${a}` }))} />
-          <Button icon={RefreshCw} variant="secondary" onClick={() => {
-            if (confirm('¿Recargar festivos?')) {
-              const fps = FESTIVOS_POR_ANIO[anioActual] || [];
-              const manuales = festivos.filter(f => f.ambito === 'MANUAL');
-              setFestivos([...fps.map((f, i) => ({ ...f, id: Date.now() + i })), ...manuales]);
-            }
-          }}>Actualizar Festivos</Button>
-        </div>
-      </div>
-      
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Convenio {anioActual}</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <Input label="Horas Anuales" type="number" value={convenio.horas_anuales} onChange={(v) => setConvenio({...convenio, horas_anuales: parseFloat(v)})} />
-          <Input label="Días Vacaciones" type="number" value={convenio.dias_vacaciones} onChange={(v) => setConvenio({...convenio, dias_vacaciones: parseInt(v)})} />
-          <Input label="Días Asuntos Propios" type="number" value={convenio.dias_asuntos_propios} onChange={(v) => setConvenio({...convenio, dias_asuntos_propios: parseInt(v)})} />
-        </div>
-      </Card>
-      
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Traspaso Horas</h2>
-          <Button icon={Plus} size="sm" onClick={() => setModalTraspaso(true)}>Traspasar</Button>
-        </div>
-        <p className="text-sm text-gray-600">Permite traspasar horas no consumidas entre años</p>
-      </Card>
-      
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Guardias</h2>
-          <Button icon={Plus} size="sm" onClick={() => { setEditandoGuardia(null); setFormGuardia({ empleado_id: '', fecha: '', tipo: '', observaciones: '' }); setModalGuardia(true); }}>Añadir</Button>
-        </div>
-        <div className="space-y-2">
-          {guardias.map(g => {
-            const emp = empleados.find(e => e.id === g.empleado_id);
-            return (
-              <div key={g.id} className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{emp?.nombre} - {g.tipo}</p>
-                  <p className="text-sm text-gray-500">{g.fecha}</p>
-                </div>
-                <Button variant="ghost" icon={Trash2} size="sm" onClick={() => setGuardias(guardias.filter(gg => gg.id !== g.id))} className="!p-2" />
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-      
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Festivos</h2>
-          <Button icon={Plus} size="sm" onClick={() => { setEditandoFestivo(null); setFormFestivo({ fecha: '', descripcion: '', ambito: 'MANUAL', medio_dia: false }); setModalFestivo(true); }}>Añadir</Button>
-        </div>
-        <div className="space-y-1">
-          {festivos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).map(f => (
-            <div key={f.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <div>
-                <span className="font-medium text-sm">{f.descripcion}</span>
-                <span className="text-xs text-gray-500 ml-2">{f.fecha}</span>
-                {f.medio_dia && <span className="text-xs text-orange-600 ml-2">(½)</span>}
-              </div>
-              <Button variant="ghost" icon={Trash2} size="sm" onClick={() => setFestivos(festivos.filter(ff => ff.id !== f.id))} className="!p-1" />
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
-      <div className="bg-white border-b shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-                <Calendar className="text-white" size={24} />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Farmacia Control</span>
-            </div>
-            <nav className="flex gap-2">
-              {['dashboard', 'empleados', 'configuracion'].map(v => (
-                <button key={v} onClick={() => setVista(v)} className={`px-4 py-2 rounded-lg font-medium transition-colors capitalize ${vista === v ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-100'}`}>
-                  {v === 'configuracion' ? 'Config' : v}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {vista === 'dashboard' && <VistaDashboard />}
-        {vista === 'empleados' && <VistaEmpleados />}
-        {vista === 'empleado' && <VistaEmpleado />}
-        {vista === 'configuracion' && <VistaConfiguracion />}
-      </div>
-      
-      {/* MODALES - igual que antes, omitidos por brevedad */}
-      <Modal isOpen={modalEmpleado} onClose={() => setModalEmpleado(false)} title="Empleado">
-        <div className="space-y-4">
-          <Input label="Nombre" value={formEmpleado.nombre} onChange={(v) => setFormEmpleado({...formEmpleado, nombre: v})} required />
-          <Input label="Fecha Alta" type="date" value={formEmpleado.fecha_alta} onChange={(v) => setFormEmpleado({...formEmpleado, fecha_alta: v})} required />
-          <div className="flex gap-2 pt-4">
-            <Button onClick={guardarEmpleado} icon={Save} className="flex-1">Guardar</Button>
-            <Button variant="secondary" onClick={() => setModalEmpleado(false)}>Cancelar</Button>
-          </div>
-        </div>
-      </Modal>
-      
-      <Modal isOpen={modalEvento} onClose={() => setModalEvento(false)} title="Evento">
-        <div className="space-y-4">
-          <Select label="Tipo" value={formEvento.tipo_evento} onChange={(v) => setFormEvento({...formEvento, tipo_evento: v})} options={Object.entries(TIPOS_EVENTO).map(([k, v]) => ({ value: k, label: v.label }))} />
-          <Input label="Inicio" type="date" value={formEvento.fecha_inicio} onChange={(v) => setFormEvento({...formEvento, fecha_inicio: v})} required />
-          <Input label="Fin" type="date" value={formEvento.fecha_fin} onChange={(v) => setFormEvento({...formEvento, fecha_fin: v})} required />
-          {['FALTA_HORAS', 'HORAS_EXTRA'].includes(formEvento.tipo_evento) && (
-            <Input label="Horas" type="number" value={formEvento.horas} onChange={(v) => setFormEvento({...formEvento, horas: v})} step="0.5" min="0" required />
-          )}
-          <div className="flex gap-2 pt-4">
-            <Button onClick={guardarEvento} icon={Save} className="flex-1">Guardar</Button>
-            <Button variant="secondary" onClick={() => setModalEvento(false)}>Cancelar</Button>
-          </div>
-        </div>
-      </Modal>
-      
-      <Modal isOpen={modalHorario} onClose={() => setModalHorario(false)} title="Horario">
-        <div className="space-y-4">
-          <Input label="Descripción" value={formHorario.descripcion} onChange={(v) => setFormHorario({...formHorario, descripcion: v})} required />
-          <Input label="Inicio" type="date" value={formHorario.fecha_inicio} onChange={(v) => setFormHorario({...formHorario, fecha_inicio: v})} required />
-          <Input label="Fin" type="date" value={formHorario.fecha_fin} onChange={(v) => setFormHorario({...formHorario, fecha_fin: v})} />
-          <div className="border-t pt-4">
-            <h3 className="font-bold mb-3">Semanal</h3>
-            {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'].map((dia, idx) => (
-              <div key={dia} className="space-y-2 mb-3">
-                <Checkbox label={DIAS_SEMANA_COMPLETO[idx + 1]} checked={formHorario[dia].activo} onChange={(checked) => setFormHorario({ ...formHorario, [dia]: { ...formHorario[dia], activo: checked } })} />
-                {formHorario[dia].activo && (
-                  <div className="grid grid-cols-2 gap-2 ml-6">
-                    <Input type="time" value={formHorario[dia].inicio} onChange={(v) => setFormHorario({ ...formHorario, [dia]: { ...formHorario[dia], inicio: v } })} />
-                    <Input type="time" value={formHorario[dia].fin} onChange={(v) => setFormHorario({ ...formHorario, [dia]: { ...formHorario[dia], fin: v } })} />
-                  </div>
-                )}
-              </div>
-            ))}
-            <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
-              <p className="text-sm font-medium text-emerald-900">Total: {calcularHorasSemanales(formHorario)}h/sem</p>
-            </div>
-          </div>
-          <div className="flex gap-2 pt-4">
-            <Button onClick={guardarHorario} icon={Save} className="flex-1">Guardar</Button>
-            <Button variant="secondary" onClick={() => setModalHorario(false)}>Cancelar</Button>
-          </div>
-        </div>
-      </Modal>
-      
-      <Modal isOpen={modalGuardia} onClose={() => setModalGuardia(false)} title="Guardia">
-        <div className="space-y-4">
-          <Select label="Empleado" value={formGuardia.empleado_id} onChange={(v) => setFormGuardia({...formGuardia, empleado_id: v})} options={[{ value: '', label: 'Seleccionar' }, ...empleados.map(e => ({ value: e.id.toString(), label: e.nombre }))]} required />
-          <Input label="Fecha" type="date" value={formGuardia.fecha} onChange={(v) => setFormGuardia({...formGuardia, fecha: v})} required />
-          <Input label="Tipo" value={formGuardia.tipo} onChange={(v) => setFormGuardia({...formGuardia, tipo: v})} placeholder="Mañana/Tarde/24h" required />
-          <Input label="Observaciones" value={formGuardia.observaciones} onChange={(v) => setFormGuardia({...formGuardia, observaciones: v})} />
-          <div className="flex gap-2 pt-4">
-            <Button onClick={guardarGuardia} icon={Save} className="flex-1">Guardar</Button>
-            <Button variant="secondary" onClick={() => setModalGuardia(false)}>Cancelar</Button>
-          </div>
-        </div>
-      </Modal>
-      
-      <Modal isOpen={modalFestivo} onClose={() => setModalFestivo(false)} title="Festivo">
-        <div className="space-y-4">
-          <Input label="Fecha" type="date" value={formFestivo.fecha} onChange={(v) => setFormFestivo({...formFestivo, fecha: v})} required />
-          <Input label="Descripción" value={formFestivo.descripcion} onChange={(v) => setFormFestivo({...formFestivo, descripcion: v})} required />
-          <Select label="Ámbito" value={formFestivo.ambito} onChange={(v) => setFormFestivo({...formFestivo, ambito: v})} options={[
-            { value: 'MANUAL', label: 'Manual' },
-            { value: 'LOCAL', label: 'Local' },
-            { value: 'AUTONOMICO', label: 'Autonómico' },
-            { value: 'NACIONAL', label: 'Nacional' },
-            { value: 'CONVENIO', label: 'Convenio' }
-          ]} />
-          <Checkbox label="Medio día" checked={formFestivo.medio_dia} onChange={(checked) => setFormFestivo({...formFestivo, medio_dia: checked})} />
-          <div className="flex gap-2 pt-4">
-            <Button onClick={guardarFestivo} icon={Save} className="flex-1">Guardar</Button>
-            <Button variant="secondary" onClick={() => setModalFestivo(false)}>Cancelar</Button>
-          </div>
-        </div>
-      </Modal>
-      
-      <Modal isOpen={modalTraspaso} onClose={() => setModalTraspaso(false)} title="Traspasar Horas">
-        <div className="space-y-4">
-          <Select label="Empleado" value={formTraspaso.empleado_id} onChange={(v) => setFormTraspaso({...formTraspaso, empleado_id: v})} options={[{ value: '', label: 'Seleccionar' }, ...empleados.map(e => ({ value: e.id.toString(), label: e.nombre }))]} required />
-          <Input label="Horas" type="number" value={formTraspaso.horas} onChange={(v) => setFormTraspaso({...formTraspaso, horas: v})} step="0.5" required />
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-900">Las horas se sumarán al convenio del siguiente año</p>
-          </div>
-          <div className="flex gap-2 pt-4">
-            <Button onClick={traspasarHoras} icon={Save} className="flex-1">Traspasar</Button>
-            <Button variant="secondary" onClick={() => setModalTraspaso(false)}>Cancelar</Button>
-          </div>
-        </div>
-      </Modal>
-    </div>
-  );
 }
+
+var ST=loadST()||defST();
+var vista='dashboard',mesG=new Date().getMonth(),empSel=null,mCb=null;
+
+function hh(a,b){if(!a||!b)return 0;var p=a.split(':'),q=b.split(':');return((+q[0]*60+ +q[1])-(+p[0]*60+ +p[1]))/60;}
+function hSem(hor){
+var t=0;
+['lunes','martes','miercoles','jueves','viernes','sabado'].forEach(function(d){
+if(hor[d]&&hor[d].on){t+=hh(hor[d].i,hor[d].f);if(hor[d].i2&&hor[d].f2)t+=hh(hor[d].i2,hor[d].f2);}
+});
+return Math.round(t*100)/100;
+}
+function hDia(fecha,hor){
+var ds=new Date(fecha+'T12:00:00').getDay();
+var map=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+var d=map[ds];if(!hor||!hor[d]||!hor[d].on)return 0;
+var t=hh(hor[d].i,hor[d].f);if(hor[d].i2&&hor[d].f2)t+=hh(hor[d].i2,hor[d].f2);return t;
+}
+function horEn(eid,fecha){
+return ST.hors.filter(function(h){return h.eid===eid;})
+.sort(function(a,b){return b.ini>a.ini?1:-1;})
+.find(function(h){return fecha>=h.ini&&fecha<=(h.fin||'2099-12-31');})||null;
+}
+function getFest(anio){
+var base=(FB[anio]||[]).map(function(x,i){return{id:'p'+i,f:x.f,d:x.d,a:x.a,md:x.md};});
+var bMap={};base.forEach(function(x){bMap[x.f]=true;});
+var man=ST.fman.filter(function(x){return x.f.startsWith(''+anio)&&!bMap[x.f];});
+return base.concat(man);
+}
+function calcSt(emp,anio){
+var conv=ST.conv[anio]||{h:1786,v:25,a:3};
+var evs=ST.evs.filter(function(e){return e.eid===emp.id&&(e.ini.startsWith(''+anio)||e.fin.startsWith(''+anio));});
+var fest=getFest(anio);
+var alta=emp.alta?new Date(emp.alta+'T12:00:00'):null;
+var hC=emp.horas||conv.h,hT=hC;
+if(alta&&alta.getFullYear()===anio){var di=Math.round((new Date(anio,11,31)-alta)/864e5)+1;hT=Math.round(hC*(di/365)*100)/100;}
+var hTot=0,hV=0,hF=0,hFal=0,hExt=0,hSab=0,nSab=0;
+for(var m=0;m<12;m++){
+var dm=new Date(anio,m+1,0).getDate();
+for(var dia=1;dia<=dm;dia++){
+var fe=anio+'-'+pad(m+1)+'-'+pad(dia);
+if(alta&&alta.getFullYear()===anio&&fe<emp.alta)continue;
+var ds=new Date(fe+'T12:00:00').getDay();
+if(ds===0)continue;
+var hor=horEn(emp.id,fe);if(!hor)continue;
+var hd=hDia(fe,hor);hTot+=hd;
+if(ds===6){nSab++;hSab+=hd;}
+var ev=evs.find(function(e){return fe>=e.ini&&fe<=e.fin;});
+var fv=fest.find(function(x){return x.f===fe;});
+if(ev){
+if(ev.tipo==='VACACIONES'||ev.tipo==='ASUNTOS_PROPIOS'||ev.tipo==='SABADO_LIBRE')hV+=hd;
+else if(ev.tipo==='FALTA_HORAS')hFal+=(ev.h||0);
+else if(ev.tipo==='HORAS_EXTRA')hExt+=(ev.h||0);
+}else if(fv){hF+=fv.md?hd-4.5:hd;}
+}
+}
+var hR=hTot-hV-hF-hFal+hExt,saldo=Math.round((hR-hT)*100)/100;
+var vU=evs.filter(function(e){return e.tipo==='VACACIONES';}).reduce(function(s,e){return s+Math.round((new Date(e.fin+'T12:00:00')-new Date(e.ini+'T12:00:00'))/864e5)+1;},0);
+var vT=conv.v;if(alta&&alta.getFullYear()===anio){var d2=Math.round((new Date(anio,11,31)-alta)/864e5)+1;vT=Math.round(conv.v*(d2/365));}
+var aU=evs.filter(function(e){return e.tipo==='ASUNTOS_PROPIOS';}).reduce(function(s,e){return s+Math.round((new Date(e.fin+'T12:00:00')-new Date(e.ini+'T12:00:00'))/864e5)+1;},0);
+var aT=conv.a;if(alta&&alta.getFullYear()===anio){var d3=Math.round((new Date(anio,11,31)-alta)/864e5)+1;aT=Math.round(conv.a*(d3/365));}
+var hpp=nSab>0?hSab/nSab:3.75,sabX=saldo>0&&hpp>0?Math.floor(saldo/hpp):0;
+var sabU=evs.filter(function(e){return e.tipo==='SABADO_LIBRE';}).reduce(function(s,e){
+var c=0,dd=new Date(e.ini+'T12:00:00'),fe2=new Date(e.fin+'T12:00:00');
+for(;dd<=fe2;dd.setDate(dd.getDate()+1))if(dd.getDay()===6)c++;return s+c;
+},0);
+return{emp:emp,h:{teo:hT,real:Math.round(hR*100)/100,saldo:saldo},v:{t:vT,u:vU,d:vT-vU},a:{t:aT,u:aU,d:aT-aU},s:{x:sabX,u:sabU,d:Math.max(0,sabX-sabU)}};
+}
+function allSt(){
+var ac=ST.emps.filter(function(e){return e.activo;});
+return{total:ac.length,list:ac.map(function(e){return calcSt(e,ST.anio);})};
+}
+
+function setVista(v,eid){
+vista=v;
+['dashboard','empleados','empleado','configuracion'].forEach(function(x){
+var el=gid('v-'+x);if(el)el.classList.toggle('on',x===v);
+});
+[['nb0','dashboard'],['nb1','empleados'],['nb2','configuracion']].forEach(function(p){
+var b=gid(p[0]);if(b)b.classList.toggle('on',p[1]===v||(v==='empleado'&&p[1]==='empleados'));
+});
+if(v==='dashboard')rDash();
+if(v==='empleados')rEmps();
+if(v==='configuracion')rConf();
+if(v==='empleado'){
+var emp=eid?ST.emps.find(function(e){return e.id===eid;}):empSel;
+empSel=emp;rEmpDet(emp);
+}
+}
+function setAnio(v){
+ST.anio=parseInt(v);
+['anioSel','confAnioSel'].forEach(function(id){var el=gid(id);if(el)el.value=v;});
+saveST();setVista(vista,empSel?empSel.id:null);
+}
+
+/* ── DASHBOARD ── */
+function rDash(){
+sTxt('d-sub','Resumen general del a\u00f1o '+ST.anio);
+var st=allSt();
+var h='<div class="sc" style="cursor:default"><div class="scl">Empleados</div><div class="scn">'+st.total+'</div><div class="sch">activos</div></div>';
+st.list.slice(0,3).forEach(function(s){
+h+='<div class="sc" data-id="'+s.emp.id+'" onclick="setVista(\'empleado\',this.dataset.id)">'
++'<div class="scl">'+esc(s.emp.nombre)+'</div>'
++'<div class="smr"><span style="color:#9ca3af">Vacaciones</span><span style="color:#1239AD;font-weight:700">'+s.v.d+'/'+s.v.t+'</span></div>'
++'<div class="smr"><span style="color:#9ca3af">Asuntos</span><span style="color:#7c3aed;font-weight:700">'+s.a.d+'/'+s.a.t+'</span></div>'
++'<div class="smr"><span style="color:#9ca3af">S\u00e1bados</span><span style="color:#99B9AF;font-weight:700">'+s.s.u+'/'+s.s.x+'</span></div>'
++'<div class="smr"><span style="color:#9ca3af">Saldo</span><span class="'+(s.h.saldo>=0?'sp':'sn')+'" style="font-weight:700">'+(s.h.saldo>0?'+':'')+s.h.saldo+'h</span></div>'
++'</div>';
+});
+sHTML('d-stats',h);
+rCalMes();
+var rows=st.list.map(function(s){
+return '<div class="er" data-id="'+s.emp.id+'" onclick="setVista(\'empleado\',this.dataset.id)">'
++'<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">'
++'<div class="av">'+esc(s.emp.nombre[0])+'</div>'
++'<div><div style="font-weight:600">'+esc(s.emp.nombre)+'</div>'
++'<div style="font-size:11px;color:#9ca3af">Alta: '+s.emp.alta+'</div></div></div>'
++'<div style="display:flex;gap:18px">'
++'<div style="text-align:center"><div style="font-size:10px;color:#9ca3af">Vac</div><div style="font-size:13px;font-weight:700;color:#1239AD">'+s.v.d+'/'+s.v.t+'</div></div>'
++'<div style="text-align:center"><div style="font-size:10px;color:#9ca3af">As</div><div style="font-size:13px;font-weight:700;color:#7c3aed">'+s.a.d+'/'+s.a.t+'</div></div>'
++'<div style="text-align:center"><div style="font-size:10px;color:#9ca3af">S\u00e1b</div><div style="font-size:13px;font-weight:700;color:#99B9AF">'+s.s.u+'/'+s.s.x+'</div></div>'
++'<div style="text-align:center"><div style="font-size:10px;color:#9ca3af">Saldo</div><div style="font-size:13px;font-weight:700" class="'+(s.h.saldo>=0?'sp':'sn')+'">'+(s.h.saldo>0?'+':'')+s.h.saldo+'h</div></div>'
++'</div></div>';
+}).join('');
+sHTML('d-emp',rows||'<div class="empty">Sin empleados</div>');
+}
+
+function rCalMes(){
+var anio=ST.anio,fest=getFest(anio);
+sTxt('cal-ml',MESES[mesG]+' '+anio);
+var pd=new Date(anio,mesG,1),dm=new Date(anio,mesG+1,0).getDate(),off=(pd.getDay()+6)%7;
+var hoy=new Date().toISOString().slice(0,10);
+var h=DIAS.map(function(d){return '<div class="caldn">'+d+'</div>';}).join('');
+for(var i=0;i<off;i++)h+='<div class="calc emp"></div>';
+for(var dia=1;dia<=dm;dia++){
+var fe=anio+'-'+pad(mesG+1)+'-'+pad(dia);
+var ds=new Date(fe+'T12:00:00').getDay();
+var fv=fest.find(function(x){return x.f===fe;});
+var eH='';
+ST.emps.filter(function(e){return e.activo;}).forEach(function(emp){
+var ev=ST.evs.find(function(e){return e.eid===emp.id&&fe>=e.ini&&fe<=e.fin;});
+if(ev){var t=TIPOS[ev.tipo];eH+='<div class="cev '+(t?t.ev:'')+'">'+(emp.nombre.split(' ')[0]||'')+' '+(t?t.letra:'')+'</div>';}
+});
+if(fv)eH+='<div class="cev eF">'+(fv.d.slice(0,12))+(fv.md?' \u00bd':'')+'</div>';
+h+='<div class="calc'+(ds===0?' sun':'')+'" style="'+(fe===hoy?'border:2px solid #1239AD;':'')+'" data-fecha="'+fe+'" onclick="evClick(this)">'
++'<div class="calcn" style="'+(fe===hoy?'color:#1239AD;font-weight:800':'')+'">'+(dia)+'</div>'+eH+'</div>';
+}
+sHTML('cal-g',h);
+var leg=Object.keys(TIPOS).map(function(k){return '<div class="legi"><span class="dot" style="background:'+TIPOS[k].hex+'"></span>'+TIPOS[k].label+'</div>';}).join('');
+leg+='<div class="legi"><span class="dot" style="background:#f59e0b"></span>Festivo</div>';
+sHTML('cal-leg',leg);
+}
+function evClick(el){abrirEv(el.dataset.fecha,null,null);}
+function cambiarMes(d){mesG=((mesG+d)+12)%12;rCalMes();}
+
+/* ── EMPLEADOS ── */
+function rEmps(){
+var ac=ST.emps.filter(function(e){return e.activo;});
+sTxt('e-sub',ac.length+' registrados');
+var st=allSt();
+var h=ac.map(function(emp){
+var s=st.list.find(function(x){return x.emp.id===emp.id;});
+var hors=ST.hors.filter(function(x){return x.eid===emp.id;});
+var sr=s?'<div style="display:flex;gap:12px;margin-top:5px;flex-wrap:wrap">'
++'<span style="color:#1239AD;font-size:12px;font-weight:700">Vac: '+s.v.d+'/'+s.v.t+'</span>'
++'<span style="color:#7c3aed;font-size:12px;font-weight:700">As: '+s.a.d+'/'+s.a.t+'</span>'
++'<span style="color:#99B9AF;font-size:12px;font-weight:700">S\u00e1b: '+s.s.u+'/'+s.s.x+'</span>'
++'<span class="'+(s.h.saldo>=0?'sp':'sn')+'" style="font-size:12px;font-weight:700">Saldo: '+(s.h.saldo>0?'+':'')+s.h.saldo+'h</span>'
++'</div>':'';
+var hr=hors.length?'<div style="margin-top:14px;padding-top:12px;border-top:1px solid #f9fafb">'
++'<div style="font-size:11px;font-weight:600;color:#9ca3af;margin-bottom:6px">HORARIOS</div>'
++hors.map(function(h2){return '<div style="background:#f9fafb;border-radius:8px;padding:8px 10px;margin-bottom:4px;font-size:12px"><span style="font-weight:600">'+esc(h2.desc||'Horario')+'</span><span style="color:#6b7280;margin-left:8px">'+h2.ini+' \u2192 '+(h2.fin||'\u221e')+' \u00b7 '+hSem(h2)+'h/sem</span></div>';}).join('')
++'</div>':'';
+return '<div class="card s">'
++'<div class="cp">'
++'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">'
++'<div style="display:flex;align-items:center;gap:12px;flex:1">'
++'<div class="av">'+esc(emp.nombre[0])+'</div>'
++'<div><div style="font-weight:600">'+esc(emp.nombre)+'</div>'
++'<div style="font-size:11px;color:#9ca3af">Alta: '+emp.alta+(emp.horas?' \u00b7 '+emp.horas+'h/a\u00f1o':'')+'</div>'+sr+'</div></div>'
++'<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">'
++'<button class="btn bo bs" data-id="'+emp.id+'" onclick="setVista(\'empleado\',this.dataset.id)">Detalles</button>'
++'<button class="bi" data-id="'+emp.id+'" onclick="abrirModalEmp(this.dataset.id)" title="Editar">&#9998;</button>'
++'<button class="bi d" data-id="'+emp.id+'" onclick="elimEmp(this.dataset.id)" title="Eliminar">&#128465;</button>'
++'</div></div>'+hr+'</div></div>';
+}).join('');
+sHTML('e-list',h||'<div class="empty">Sin empleados. Crea el primero.</div>');
+}
+
+function abrirModalEmp(id){
+var emp=id?ST.emps.find(function(e){return e.id===id;}):null;
+sHTML('m-body',
+'<div class="fg"><label class="fl">Nombre <span style="color:red">*</span></label>'
++'<input id="mn" value="'+esc(emp?emp.nombre:'')+'" placeholder="Nombre completo" /></div>'
++'<div class="fg"><label class="fl">Fecha de Alta <span style="color:red">*</span></label>'
++'<input id="ma" type="date" value="'+(emp?emp.alta:'')+'" /></div>'
++'<div class="fg"><label class="fl">Horas anuales propias <span style="color:#9ca3af;font-size:11px;font-weight:400">(opcional)</span></label>'
++'<div class="fh">Solo si difiere del convenio.</div>'
++'<input id="mh" type="number" step="0.5" min="0" value="'+(emp&&emp.horas?emp.horas:'')+'" placeholder="Ej: 1339" style="margin-top:4px" /></div>'
+);
+abrirModal(emp?'Editar Empleado':'Nuevo Empleado',function(){
+var n=gVal('mn').trim(),al=gVal('ma'),ho=gVal('mh');
+if(!n||!al){toast('Nombre y fecha son obligatorios','er');return;}
+if(emp){
+var idx=ST.emps.findIndex(function(e){return e.id===id;});
+ST.emps[idx]=Object.assign({},ST.emps[idx],{nombre:n,alta:al,horas:ho?parseFloat(ho):null});
+}else{
+ST.emps.push({id:uid(),nombre:n,alta:al,horas:ho?parseFloat(ho):null,activo:true,arr:0});
+}
+saveST();cerrarModal();rEmps();toast(emp?'Empleado actualizado':'Empleado creado','ok');
+});
+}
+function elimEmp(id){
+var emp=ST.emps.find(function(e){return e.id===id;});
+if(!confirm('\u00bfEliminar a '+((emp&&emp.nombre)||'')+'? Se borrar\u00e1n tambi\u00e9n todos sus eventos y horarios.'))return;
+ST.emps=ST.emps.filter(function(e){return e.id!==id;});
+ST.evs=ST.evs.filter(function(e){return e.eid!==id;});
+ST.hors=ST.hors.filter(function(h){return h.eid!==id;});
+saveST();rEmps();toast('Empleado eliminado','in');
+}
+
+/* ── DETALLE EMPLEADO ── */
+function rEmpDet(emp){
+if(!emp)return;
+var anio=ST.anio,s=calcSt(emp,anio);
+var evs=ST.evs.filter(function(e){return e.eid===emp.id;}).sort(function(a,b){return a.ini>b.ini?1:-1;});
+var hors=ST.hors.filter(function(h){return h.eid===emp.id;});
+var fest=getFest(anio);
+var eA=evs.filter(function(e){return e.ini.startsWith(''+anio)||e.fin.startsWith(''+anio);});
+
+var h='<div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap">'
++'<div class="av" style="width:52px;height:52px;font-size:20px">'+esc(emp.nombre[0])+'</div>'
++'<div style="flex:1"><div style="font-size:22px;font-weight:700">'+esc(emp.nombre)+'</div>'
++'<div style="font-size:12px;color:#9ca3af">Alta: '+emp.alta+(emp.horas?' \u00b7 '+emp.horas+'h/a\u00f1o':'')+'</div></div>'
++'<div style="display:flex;gap:8px;flex-wrap:wrap">'
++'<button class="btn bo bs" data-eid="'+emp.id+'" onclick="abrirEv(null,this.dataset.eid,null)">+ Evento</button>'
++'<button class="btn bo bs" data-eid="'+emp.id+'" onclick="abrirHor(this.dataset.eid,null)">&#8987; Horario</button>'
++'</div></div>'
++'<div class="g4 s">'
++'<div class="sc" style="cursor:default"><div class="scl">Vacaciones</div><div class="scn" style="color:#1239AD">'+s.v.d+'</div><div class="sch">de '+s.v.t+' d\u00edas</div></div>'
++'<div class="sc" style="cursor:default"><div class="scl">Asuntos Propios</div><div class="scn" style="color:#7c3aed">'+s.a.d+'</div><div class="sch">de '+s.a.t+' d\u00edas</div></div>'
++'<div class="sc" style="cursor:default"><div class="scl">S\u00e1bados Libres</div><div class="scn" style="color:#0891b2">'+s.s.d+'</div><div class="sch">de '+s.s.x+' por saldo</div></div>'
++'<div class="sc" style="cursor:default"><div class="scl">Saldo Horas</div><div class="scn '+(s.h.saldo>=0?'sp':'sn')+'">'+(s.h.saldo>0?'+':'')+s.h.saldo+'</div><div class="sch">teo: '+s.h.teo+'h</div></div>'
++'</div>'
++'<div class="card s"><div class="ch"><span class="ct">Calendario Anual '+anio+'</span></div><div class="cp">'
++rCalA(emp,anio,fest)
++'<div class="leg">'+Object.keys(TIPOS).map(function(k){return '<div class="legi"><span class="dot" style="background:'+TIPOS[k].hex+'"></span>'+TIPOS[k].label+'</div>';}).join('')
++'<div class="legi"><span class="dot" style="background:#f59e0b"></span>Festivo</div></div></div></div>'
++'<div class="card s"><div class="ch"><span class="ct">Eventos '+anio+'</span>'
++'<button class="btn bp bs" data-eid="'+emp.id+'" onclick="abrirEv(null,this.dataset.eid,null)">+ A\u00f1adir</button></div>'
++(eA.length===0?'<div class="empty">Sin eventos este a\u00f1o</div>'
+:eA.map(function(ev){
+var t=TIPOS[ev.tipo];
+var dias=Math.round((new Date(ev.fin+'T12:00:00')-new Date(ev.ini+'T12:00:00'))/864e5)+1;
+return '<div class="er">'
++'<div style="display:flex;align-items:center;gap:10px;flex:1">'
++'<span class="dot" style="background:'+(t?t.hex:'#888')+'"></span>'
++'<div><div style="font-weight:600;font-size:13px">'+(t?t.label:ev.tipo)+'</div>'
++'<div style="font-size:11px;color:#9ca3af">'+ev.ini+' \u2192 '+ev.fin+' \u00b7 '+dias+'d'+(ev.h?' \u00b7 '+ev.h+'h':'')+(ev.nota?' \u00b7 '+esc(ev.nota):'')+'</div></div></div>'
++'<div style="display:flex;gap:4px">'
++'<button class="bi" data-evid="'+ev.id+'" data-eid="'+emp.id+'" onclick="abrirEv(null,this.dataset.eid,this.dataset.evid)">&#9998;</button>'
++'<button class="bi d" data-evid="'+ev.id+'" onclick="elimEv(this.dataset.evid)">&#128465;</button>'
++'</div></div>';
+}).join(''))
++'</div>'
++'<div class="card s"><div class="ch"><span class="ct">Horarios</span>'
++'<button class="btn bo bs" data-eid="'+emp.id+'" onclick="abrirHor(this.dataset.eid,null)">+ A\u00f1adir</button></div>'
++(hors.length===0?'<div class="empty">Sin horarios configurados</div>'
+:hors.map(function(hor){
+return '<div style="padding:16px 20px;border-bottom:1px solid #f9fafb">'
++'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
++'<div><span style="font-weight:600">'+esc(hor.desc||'Horario')+'</span>'
++'<span style="font-size:12px;color:#9ca3af;margin-left:8px">'+hor.ini+' \u2192 '+(hor.fin||'\u221e')+'</span>'
++'<span style="font-size:12px;color:#1239AD;font-weight:700;margin-left:8px">'+hSem(hor)+'h/sem</span></div>'
++'<div style="display:flex;gap:4px">'
++'<button class="bi" data-eid="'+emp.id+'" data-hid="'+hor.id+'" onclick="abrirHor(this.dataset.eid,this.dataset.hid)">&#9998;</button>'
++'<button class="bi d" data-hid="'+hor.id+'" onclick="elimHor(this.dataset.hid)">&#128465;</button>'
++'</div></div>'
++'<table class="ht"><tr><th>D\u00eda</th><th>Turno 1</th><th>Turno 2</th><th>Total</th></tr>'
++['lunes','martes','miercoles','jueves','viernes','sabado'].map(function(d){
+var dd=hor[d];if(!dd||!dd.on)return '';
+var tot=hh(dd.i,dd.f)+(dd.i2&&dd.f2?hh(dd.i2,dd.f2):0);
+return '<tr><td style="font-weight:600;text-transform:capitalize">'+d+'</td>'
++'<td>'+(dd.i&&dd.f?dd.i+'\u2013'+dd.f:'\u2013')+'</td>'
++'<td>'+(dd.i2&&dd.f2?dd.i2+'\u2013'+dd.f2:'\u2013')+'</td>'
++'<td style="color:#1239AD;font-weight:600">'+tot+'h</td></tr>';
+}).join('')+'</table></div>';
+}).join(''))
++'</div>';
+sHTML('emp-det',h);
+}
+
+function rCalA(emp,anio,fest){
+var evs=ST.evs.filter(function(e){return e.eid===emp.id;});
+var gds=ST.gds.filter(function(g){return g.eid===emp.id&&g.fecha.startsWith(''+anio);});
+var hoy=new Date().toISOString().slice(0,10);
+var h='<div class="ag">';
+for(var m=0;m<12;m++){
+var pd=new Date(anio,m,1),dm=new Date(anio,m+1,0).getDate(),off=(pd.getDay()+6)%7;
+h+='<div><div class="amt">'+MESES[m]+'</div><div class="amg">';
+h+=DIAS.map(function(d){return '<div class="adn">'+d[0]+'</div>';}).join('');
+for(var i=0;i<off;i++)h+='<div></div>';
+for(var dia=1;dia<=dm;dia++){
+var fe=anio+'-'+pad(m+1)+'-'+pad(dia);
+var ds=new Date(fe+'T12:00:00').getDay();
+var ev=evs.find(function(e){return fe>=e.ini&&fe<=e.fin;});
+var fv=fest.find(function(x){return x.f===fe;});
+var gv=gds.find(function(g){return g.fecha===fe;});
+var cls='ad'+(ds===0?' sun':'');
+var sty='';
+if(ev&&TIPOS[ev.tipo])sty='background:'+TIPOS[ev.tipo].hex+';color:#fff;font-weight:700';
+else if(fv)cls+=' fest';
+if(gv)cls+=' guard';
+if(fe===hoy)cls+=' today';
+h+='<div class="'+cls+'" style="'+sty+'" title="'+fe+(ev?' \u2013 '+(TIPOS[ev.tipo]?TIPOS[ev.tipo].label:ev.tipo):'')+(fv?' \u2013 '+fv.d:'')+'" data-fecha="'+fe+'" data-eid="'+emp.id+'" onclick="calClick(this)">'+dia+'</div>';
+}
+h+='</div></div>';
+}
+return h+'</div>';
+}
+function calClick(el){abrirEv(el.dataset.fecha,el.dataset.eid,null);}
+
+/* ── MODAL EVENTO ── */
+function abrirEv(fecha,eid,evid){
+var ev=evid?ST.evs.find(function(e){return e.id===evid;}):null;
+var eid2=eid||(ev?ev.eid:null);
+var eOpts=ST.emps.filter(function(e){return e.activo;}).map(function(e){
+return '<option value="'+e.id+'"'+(eid2===e.id?' selected':'')+'>'+esc(e.nombre)+'</option>';
+}).join('');
+var tOpts=Object.keys(TIPOS).map(function(k){
+return '<option value="'+k+'"'+((ev?ev.tipo:'VACACIONES')===k?' selected':'')+'>'+TIPOS[k].label+'</option>';
+}).join('');
+var showH=ev&&(ev.tipo==='FALTA_HORAS'||ev.tipo==='HORAS_EXTRA');
+sHTML('m-body',
+'<div class="fg"><label class="fl">Empleado <span style="color:red">*</span></label>'
++'<select id="ev-e"><option value="">Seleccionar...</option>'+eOpts+'</select></div>'
++'<div class="fg"><label class="fl">Tipo <span style="color:red">*</span></label>'
++'<select id="ev-t" onchange="tipoChg()">'+tOpts+'</select></div>'
++'<div class="fr">'
++'<div class="fg"><label class="fl">Desde <span style="color:red">*</span></label><input id="ev-i" type="date" value="'+(ev?ev.ini:fecha||'')+'" /></div>'
++'<div class="fg"><label class="fl">Hasta <span style="color:red">*</span></label><input id="ev-f" type="date" value="'+(ev?ev.fin:fecha||'')+'" /></div>'
++'</div>'
++'<div class="fg" id="ev-hw" style="display:'+(showH?'block':'none')+'">'
++'<label class="fl">Horas</label><input id="ev-h" type="number" step="0.5" min="0" value="'+(ev?ev.h:0)+'" /></div>'
++'<div class="fg"><label class="fl">Notas</label><input id="ev-n" value="'+esc(ev?ev.nota:'')+'" placeholder="Opcional" /></div>'
+);
+abrirModal(ev?'Editar Evento':'Nuevo Evento',function(){
+var eid3=gVal('ev-e'),tipo=gVal('ev-t'),ini=gVal('ev-i'),fin=gVal('ev-f');
+var h2=parseFloat(gVal('ev-h'))||0,nota=gVal('ev-n');
+if(!eid3||!tipo||!ini||!fin){toast('Rellena todos los campos obligatorios','er');return;}
+if(fin<ini){toast('La fecha fin no puede ser anterior al inicio','er');return;}
+if(ev){
+var idx=ST.evs.findIndex(function(e){return e.id===evid;});
+ST.evs[idx]=Object.assign({},ST.evs[idx],{eid:eid3,tipo:tipo,ini:ini,fin:fin,h:h2,nota:nota});
+}else{ST.evs.push({id:uid(),eid:eid3,tipo:tipo,ini:ini,fin:fin,h:h2,nota:nota});}
+saveST();cerrarModal();
+if(vista==='empleado'&&empSel)rEmpDet(empSel);else if(vista==='dashboard')rDash();
+toast(ev?'Evento actualizado':'Evento a\u00f1adido','ok');
+});
+}
+function tipoChg(){var t=gVal('ev-t'),hw=gid('ev-hw');if(hw)hw.style.display=(t==='FALTA_HORAS'||t==='HORAS_EXTRA')?'block':'none';}
+function elimEv(id){
+if(!confirm('\u00bfEliminar este evento?'))return;
+ST.evs=ST.evs.filter(function(e){return e.id!==id;});
+saveST();if(vista==='empleado'&&empSel)rEmpDet(empSel);else if(vista==='dashboard')rDash();
+toast('Evento eliminado','in');
+}
+
+/* ── MODAL HORARIO ── */
+var DHOR=['lunes','martes','miercoles','jueves','viernes','sabado'];
+function abrirHor(eid,hid){
+var hor=hid?ST.hors.find(function(h){return h.id===hid;}):null;
+var eid2=eid||(hor?hor.eid:null);
+var eOpts=!hor?ST.emps.filter(function(e){return e.activo;}).map(function(e){
+return '<option value="'+e.id+'"'+(eid2===e.id?' selected':'')+'>'+esc(e.nombre)+'</option>';
+}).join(''):'';
+var dH=DHOR.map(function(d){
+var dd=hor?(hor[d]||{on:false,i:'',f:'',i2:'',f2:''}):({on:false,i:'',f:'',i2:'',f2:''});
+return '<div style="padding:8px 0;border-bottom:1px solid #f9fafb">'
++'<div style="display:flex;align-items:center;gap:10px;margin-bottom:'+(dd.on?'8':'0')+'px">'
++'<div class="tgl '+(dd.on?'on':'')+'" id="tg-'+d+'" data-d="'+d+'" onclick="togDia(this.dataset.d)"></div>'
++'<span style="font-size:13px;font-weight:600;text-transform:capitalize;min-width:80px">'+d+'</span>'
++'</div>'
++'<div id="hf-'+d+'" style="display:'+(dd.on?'flex':'none')+';flex-wrap:wrap;gap:6px;align-items:center">'
++'<input type="time" id="hi-'+d+'" value="'+(dd.i||'')+'" style="width:90px" />'
++'<span style="color:#9ca3af;font-size:12px">\u2013</span>'
++'<input type="time" id="hf2-'+d+'" value="'+(dd.f||'')+'" style="width:90px" />'
++'<span style="color:#9ca3af;font-size:12px;margin:0 4px">|</span>'
++'<input type="time" id="hi2-'+d+'" value="'+(dd.i2||'')+'" style="width:90px" />'
++'<span style="color:#9ca3af;font-size:12px">\u2013</span>'
++'<input type="time" id="hf22-'+d+'" value="'+(dd.f2||'')+'" style="width:90px" />'
++'</div></div>';
+}).join('');
+sHTML('m-body',
+(!hor?'<div class="fg"><label class="fl">Empleado <span style="color:red">*</span></label><select id="hor-e"><option value="">Seleccionar...</option>'+eOpts+'</select></div>':'')
++'<div class="fg"><label class="fl">Descripci\u00f3n</label><input id="hor-d" value="'+esc(hor?hor.desc||'':'')+'" placeholder="Ej: Jornada completa" /></div>'
++'<div class="fr"><div class="fg"><label class="fl">Desde <span style="color:red">*</span></label><input id="hor-i" type="date" value="'+(hor?hor.ini:'')+'" /></div>'
++'<div class="fg"><label class="fl">Hasta <span style="color:#9ca3af;font-weight:400;font-size:11px">(vac\u00edo = indefinido)</span></label><input id="hor-f" type="date" value="'+(hor&&hor.fin?hor.fin:'')+'" /></div></div>'
++dH
+);
+abrirModal(hor?'Editar Horario':'Nuevo Horario',function(){
+var eid3=hor?hor.eid:gVal('hor-e'),desc=gVal('hor-d'),ini=gVal('hor-i'),fin=gVal('hor-f')||null;
+if(!eid3||!ini){toast('Empleado y fecha inicio son obligatorios','er');return;}
+var obj={eid:eid3,desc:desc,ini:ini,fin:fin};
+DHOR.forEach(function(d){
+var tg=gid('tg-'+d);
+obj[d]={on:tg&&tg.classList.contains('on'),i:gVal('hi-'+d),f:gVal('hf2-'+d),i2:gVal('hi2-'+d),f2:gVal('hf22-'+d)};
+});
+obj.domingo={on:false,i:'',f:'',i2:'',f2:''};
+if(hor){var idx=ST.hors.findIndex(function(h){return h.id===hid;});ST.hors[idx]=Object.assign({},ST.hors[idx],obj);}
+else ST.hors.push(Object.assign({id:uid()},obj));
+saveST();cerrarModal();
+if(vista==='empleado'&&empSel)rEmpDet(empSel);else if(vista==='empleados')rEmps();
+toast(hor?'Horario actualizado':'Horario creado','ok');
+});
+}
+function togDia(d){
+var tg=gid('tg-'+d),hf=gid('hf-'+d);
+if(!tg||!hf)return;
+tg.classList.toggle('on');hf.style.display=tg.classList.contains('on')?'flex':'none';
+}
+function elimHor(id){
+if(!confirm('\u00bfEliminar este horario?'))return;
+ST.hors=ST.hors.filter(function(h){return h.id!==id;});
+saveST();if(vista==='empleado'&&empSel)rEmpDet(empSel);toast('Horario eliminado','in');
+}
+
+/* ── CONFIG ── */
+function rConf(){
+var anio=ST.anio;sTxt('c-sub','A\u00f1o '+anio);
+var conv=ST.conv[anio]||{h:1786,v:25,a:3};
+var fest=getFest(anio);
+var gds=ST.gds.filter(function(g){return g.fecha.startsWith(''+anio);});
+var arr=ST.emps.filter(function(e){return e.activo&&e.arr;}).map(function(e){
+return '<div style="margin-top:6px;font-size:13px"><span style="font-weight:600">'+esc(e.nombre)+'</span>: <span style="color:#1239AD;font-weight:700">'+e.arr+'h de arrastre</span></div>';
+}).join('');
+var gH=gds.length?gds.map(function(g){
+var emp=ST.emps.find(function(e){return e.id===g.eid;});
+return '<div class="er"><div style="flex:1"><div style="font-weight:600;font-size:13px">'+esc((emp?emp.nombre:'?')+' \u2014 '+g.tipo)+'</div>'
++'<div style="font-size:11px;color:#9ca3af">'+g.fecha+(g.obs?' \u00b7 '+esc(g.obs):'')+'</div></div>'
++'<div style="display:flex;gap:4px">'
++'<button class="bi" data-gid="'+g.id+'" onclick="abrirGd(this.dataset.gid)">&#9998;</button>'
++'<button class="bi d" data-gid="'+g.id+'" onclick="elimGd(this.dataset.gid)">&#128465;</button>'
++'</div></div>';
+}).join(''):'<div class="empty">Sin guardias</div>';
+var fH=fest.length?fest.slice().sort(function(a,b){return a.f>b.f?1:-1;}).map(function(fv){
+var pred=fv.id.startsWith('p');
+return '<div style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f9fafb">'
++'<div><span style="font-weight:600;font-size:13px">'+esc(fv.d)+'</span>'
++'<span style="font-size:11px;color:#9ca3af;margin-left:8px">'+fv.f+'</span>'
++(fv.md?'<span style="font-size:11px;color:#d97706;margin-left:6px;font-weight:600">(\u00bd d\u00eda)</span>':'')
++'<span style="font-size:10px;color:#d1d5db;margin-left:6px;text-transform:uppercase">'+fv.a+'</span>'
++(pred?'<span style="font-size:9px;color:#e5e7eb;margin-left:4px">\u2022 predefinido</span>':'')+'</div>'
++'<div style="display:flex;gap:4px">'
++'<button class="bi" data-fid="'+fv.id+'" onclick="abrirFest(this.dataset.fid)">&#9998;</button>'
++(!pred?'<button class="bi d" data-fid="'+fv.id+'" onclick="elimFest(this.dataset.fid)">&#128465;</button>':'<span style="width:28px;display:inline-block"></span>')
++'</div></div>';
+}).join(''):'<div class="empty">Sin festivos</div>';
+
+sHTML('c-content',
+'<div class="card s"><div class="ch"><span class="ct">Convenio '+anio+'</span></div><div class="cp">'
++'<div class="g3"><div class="fg"><label class="fl">Horas Anuales</label><input id="cv-h" type="number" value="'+conv.h+'" /></div>'
++'<div class="fg"><label class="fl">D\u00edas Vacaciones</label><input id="cv-v" type="number" value="'+conv.v+'" /></div>'
++'<div class="fg"><label class="fl">D\u00edas Asuntos Propios</label><input id="cv-a" type="number" value="'+conv.a+'" /></div></div>'
++'<button class="btn bp" onclick="guardarConv()">&#128190; Guardar Convenio</button></div></div>'
+
++'<div class="card s"><div class="ch"><span class="ct">Traspaso de Horas</span>'
++'<button class="btn bo bs" onclick="abrirTrasp()">+ Traspasar</button></div>'
++'<div class="cp"><p style="font-size:13px;color:#6b7280">Asignar horas de arrastre a un empleado.</p>'+arr+'</div></div>'
+
++'<div class="card s"><div class="ch"><span class="ct">Guardias '+anio+'</span>'
++'<button class="btn bo bs" onclick="abrirGd(null)">+ A\u00f1adir</button></div>'
++'<div>'+gH+'</div></div>'
+
++'<div class="card"><div class="ch"><span class="ct">Festivos '+anio+'</span>'
++'<button class="btn bo bs" onclick="abrirFest(null)">+ A\u00f1adir</button></div>'
++'<div style="max-height:400px;overflow-y:auto">'+fH+'</div></div>'
+);
+}
+function guardarConv(){
+var anio=ST.anio;
+ST.conv[anio]={h:parseFloat(gVal('cv-h'))||1786,v:parseInt(gVal('cv-v'))||25,a:parseInt(gVal('cv-a'))||3};
+saveST();toast('Convenio guardado','ok');
+}
+function abrirGd(id){
+var g=id?ST.gds.find(function(x){return x.id===id;}):null;
+var eO=ST.emps.filter(function(e){return e.activo;}).map(function(e){
+return '<option value="'+e.id+'"'+(g&&g.eid===e.id?' selected':'')+'>'+esc(e.nombre)+'</option>';
+}).join('');
+var tipos=['LUNES','MARTES','MI\u00c9RCOLES','JUEVES','VIERNES','S\u00c1BADO','DOMINGO','FESTIVO'];
+sHTML('m-body',
+'<div class="fg"><label class="fl">Empleado <span style="color:red">*</span></label><select id="gd-e"><option value="">Seleccionar...</option>'+eO+'</select></div>'
++'<div class="fg"><label class="fl">Fecha <span style="color:red">*</span></label><input id="gd-f" type="date" value="'+(g?g.fecha:'')+'" /></div>'
++'<div class="fg"><label class="fl">Tipo <span style="color:red">*</span></label><select id="gd-t">'
++tipos.map(function(t){return '<option value="'+t+'"'+(g&&g.tipo===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div>'
++'<div class="fg"><label class="fl">Observaciones</label><input id="gd-o" value="'+esc(g?g.obs:'')+'" placeholder="Opcional" /></div>'
+);
+abrirModal(g?'Editar Guardia':'Nueva Guardia',function(){
+var eid=gVal('gd-e'),fecha=gVal('gd-f'),tipo=gVal('gd-t'),obs=gVal('gd-o');
+if(!eid||!fecha||!tipo){toast('Rellena todos los campos obligatorios','er');return;}
+if(g){var idx=ST.gds.findIndex(function(x){return x.id===id;});ST.gds[idx]=Object.assign({},ST.gds[idx],{eid:eid,fecha:fecha,tipo:tipo,obs:obs});}
+else ST.gds.push({id:uid(),eid:eid,fecha:fecha,tipo:tipo,obs:obs});
+saveST();cerrarModal();rConf();toast(g?'Guardia actualizada':'Guardia a\u00f1adida','ok');
+});
+}
+function elimGd(id){
+if(!confirm('\u00bfEliminar esta guardia?'))return;
+ST.gds=ST.gds.filter(function(g){return g.id!==id;});
+saveST();rConf();toast('Guardia eliminada','in');
+}
+function abrirFest(id){
+var pred=FB[ST.anio]||[];
+var fv=null;
+if(id){
+if(id.startsWith('p')){var i2=parseInt(id.slice(1));fv=pred[i2]?Object.assign({},pred[i2],{id:id}):null;}
+else fv=ST.fman.find(function(x){return x.id===id;});
+}
+sHTML('m-body',
+'<div class="fg"><label class="fl">Fecha <span style="color:red">*</span></label><input id="ff-f" type="date" value="'+(fv?fv.f:'')+'" /></div>'
++'<div class="fg"><label class="fl">Descripci\u00f3n <span style="color:red">*</span></label><input id="ff-d" value="'+esc(fv?fv.d:'')+'" placeholder="Ej: Fiesta local" /></div>'
++'<div class="fg"><label class="fl">\u00c1mbito</label><select id="ff-a">'
++['NACIONAL','AUTONOMICO','LOCAL','CONVENIO','MANUAL'].map(function(a){return '<option value="'+a+'"'+((fv?fv.a:'MANUAL')===a?' selected':'')+'>'+a+'</option>';}).join('')+'</select></div>'
++'<div class="fg"><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="togFF()">'
++'<div class="tgl" id="ff-m"></div><span style="font-size:13px">Medio d\u00eda</span></div></div>'
+);
+if(fv&&fv.md)setTimeout(function(){var t=gid('ff-m');if(t)t.classList.add('on');},10);
+abrirModal(fv?'Editar Festivo':'Nuevo Festivo',function(){
+var fecha=gVal('ff-f'),desc=gVal('ff-d'),amb=gVal('ff-a');
+var md=gid('ff-m')&&gid('ff-m').classList.contains('on');
+if(!fecha||!desc){toast('Fecha y descripci\u00f3n son obligatorias','er');return;}
+var data={f:fecha,d:desc,a:amb,md:md};
+if(fv&&!fv.id.startsWith('p')){var idx=ST.fman.findIndex(function(x){return x.id===id;});ST.fman[idx]=Object.assign({},ST.fman[idx],data);}
+else ST.fman.push(Object.assign({id:uid()},data));
+saveST();cerrarModal();rConf();toast(fv?'Festivo actualizado':'Festivo a\u00f1adido','ok');
+});
+}
+function togFF(){var t=gid('ff-m');if(t)t.classList.toggle('on');}
+function elimFest(id){
+if(!confirm('\u00bfEliminar este festivo?'))return;
+ST.fman=ST.fman.filter(function(f){return f.id!==id;});
+saveST();rConf();toast('Festivo eliminado','in');
+}
+function abrirTrasp(){
+var eO=ST.emps.filter(function(e){return e.activo;}).map(function(e){
+return '<option value="'+e.id+'">'+esc(e.nombre)+'</option>';
+}).join('');
+sHTML('m-body',
+'<div class="fg"><label class="fl">Empleado <span style="color:red">*</span></label><select id="tr-e"><option value="">Seleccionar...</option>'+eO+'</select></div>'
++'<div class="fg"><label class="fl">Horas de arrastre</label><div class="fh">Positivo = a favor. Negativo = debe horas.</div>'
++'<input id="tr-h" type="number" step="0.5" value="0" style="margin-top:4px" /></div>'
+);
+abrirModal('Traspaso de Horas',function(){
+var eid=gVal('tr-e'),h=parseFloat(gVal('tr-h'))||0;
+if(!eid){toast('Selecciona un empleado','er');return;}
+var idx=ST.emps.findIndex(function(e){return e.id===eid;});
+ST.emps[idx].arr=h;saveST();cerrarModal();rConf();toast('Horas de arrastre actualizadas','ok');
+});
+}
+
+/* ── MODAL GENÉRICO ── */
+function abrirModal(titulo,cb){
+sTxt('m-title',titulo);
+sHTML('m-footer','<button class="btn bp" onclick="mCb()" style="flex:1">&#128190; Guardar</button><button class="btn bo" onclick="cerrarModal()">Cancelar</button>');
+mCb=cb;
+gid('mo').classList.add('open');
+}
+function cerrarModal(){gid('mo').classList.remove('open');}
+gid('mo').addEventListener('click',function(e){if(e.target===this)cerrarModal();});
+
+/* ── EXPORT/IMPORT ── */
+function dl(blob,name){var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+function exportarBackup(){dl(new Blob([JSON.stringify(ST,null,2)],{type:'application/json'}),'farmacia_backup_'+ST.anio+'.json');toast('Backup exportado','ok');}
+function exportarCSV(){
+var st=allSt();
+var rows=[['Empleado','Vac usadas','Vac total','As usados','S\u00e1b usados','S\u00e1b por saldo','Saldo horas']];
+st.list.forEach(function(s){rows.push([s.emp.nombre,s.v.u,s.v.t,s.a.u,s.s.u,s.s.x,s.h.saldo]);});
+dl(new Blob(['\uFEFF'+rows.map(function(r){return r.join(';');}).join('\n')],{type:'text/csv;charset=utf-8;'}),'farmacia_'+ST.anio+'.csv');
+toast('CSV exportado','ok');
+}
+function importarBackup(){
+var inp=document.createElement('input');inp.type='file';inp.accept='.json';
+inp.onchange=function(e){
+var file=e.target.files[0];if(!file)return;
+var r=new FileReader();
+r.onload=function(ev){
+try{
+var data=JSON.parse(ev.target.result);
+if(!data.emps&&!data.empleados){toast('Archivo no v\u00e1lido','er');return;}
+// compatibility: migrar clave antigua 'empleados' si existe
+if(data.empleados&&!data.emps)data.emps=data.empleados;
+Object.keys(data).forEach(function(k){ST[k]=data[k];});
+saveST();gid('anioSel').value=ST.anio;gid('confAnioSel').value=ST.anio;
+setVista('dashboard');toast('Backup importado correctamente','ok');
+}catch(err){toast('Error al leer el archivo','er');}
+};r.readAsText(file);
+};inp.click();
+}
+
+/* ── TOAST ── */
+function toast(msg,type){
+var c=gid('tc'),t=document.createElement('div');
+t.className='tst '+(type||'in');t.textContent=msg;c.appendChild(t);
+setTimeout(function(){t.remove();},3000);
+}
+
+/* ── INIT ── */
+gid('anioSel').value=ST.anio;gid('confAnioSel').value=ST.anio;
+setVista('dashboard');
+</script>
+</body>
+</html>
